@@ -71,9 +71,9 @@ Checklist do projeto com status atual da implementação.
 ### IA / RAG
 - [ ] Serviço de geração de roteiro com LLM
 - [ ] Pipeline real de embeddings (producer/consumer)
-- [ ] Busca semântica em `embeddings`
-- [ ] Montagem de contexto para resposta RAG
-- [ ] Endpoints de consulta inteligente
+- [x] Busca semântica em `embeddings`
+- [x] Montagem de contexto para resposta RAG
+- [x] Endpoints de consulta inteligente
 
 ### WhatsApp (integração futura)
 - [ ] Endpoint de webhook
@@ -114,7 +114,7 @@ Checklist do projeto com status atual da implementação.
 - [x] Upload de mídia via presigned URL
 - [x] Registrar memória vinculada à atividade
 - [x] Exibir timeline por viagem
-- [ ] Consulta semântica simples (RAG v1)
+- [x] Consulta semântica simples (RAG v1)
 
 ---
 

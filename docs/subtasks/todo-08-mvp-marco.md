@@ -9,7 +9,7 @@ Fechar o primeiro ciclo completo de valor para uso real.
 - [x] Upload de mídia via presigned URL
 - [x] Registrar memória vinculada à atividade
 - [x] Exibir timeline da viagem
-- [ ] Executar consulta semântica RAG v1
+- [x] Executar consulta semântica RAG v1
 
 ## Critérios de pronto
 - [ ] Casal consegue planejar, registrar e consultar uma viagem inteira no sistema

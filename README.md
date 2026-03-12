@@ -43,6 +43,7 @@ docker compose up --build
 - `GET/PUT/DELETE /api/v1/days/{day_id}`
 - `GET/POST /api/v1/activities/`
 - `GET/PUT/DELETE /api/v1/activities/{activity_id}`
+- `POST /api/v1/rag/query`
 
 ## Erros padronizados da API
 
