@@ -8,6 +8,7 @@ Trocar o placeholder por pipeline assíncrono confiável.
 - [x] Implementar consumidor de jobs
 - [x] Implementar job de geração de thumbnail
 - [x] Implementar job de geração de embedding
+- [x] Integrar geração de embeddings com OpenAI (modelo configurável por env)
 - [x] Definir estratégia de retry/backoff
 - [x] Persistir status do job (pending/running/failed/done)
 - [x] Criar logs por job para troubleshooting

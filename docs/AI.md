@@ -4,6 +4,14 @@
 
 Permitir consultas inteligentes sobre viagens.
 
+## Configuração atual
+
+- Provider de roteiro: OpenAI (`ITINERARY_PROVIDER=openai`)
+- Modelo de roteiro: `gpt-5` (`ITINERARY_MODEL=gpt-5`)
+- Embeddings: OpenAI (`OPENAI_EMBEDDING_MODEL=text-embedding-3-small` por padrão)
+- Estratégia de prompt: `summary-first-day-by-day`
+- Fallback: quando OpenAI indisponível/erro, o backend retorna roteiro por template
+
 Exemplo:
 
 "qual foi nosso restaurante favorito?"
