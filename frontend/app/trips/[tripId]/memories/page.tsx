@@ -4,8 +4,10 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
 import {
+  Activity,
   completeUpload,
   createUploadPresign,
+  fetchActivitiesByDay,
   fetchDaysByTrip,
   fetchMemoriesByTrip,
 } from "@/lib/api";
@@ -29,7 +31,9 @@ export default function TripMemoriesPage({ params }: PageProps) {
     }>
   >([]);
   const [days, setDays] = useState<Array<{ id: string; day_number: number }>>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedDayId, setSelectedDayId] = useState("");
+  const [selectedActivityId, setSelectedActivityId] = useState("");
   const [caption, setCaption] = useState("");
   const [memoryType, setMemoryType] = useState("photo");
   const [file, setFile] = useState<File | null>(null);
@@ -49,6 +53,21 @@ export default function TripMemoriesPage({ params }: PageProps) {
     loadData().catch(() => setError("Falha ao carregar memórias."));
   }, [params.tripId]);
 
+  useEffect(() => {
+    if (!selectedDayId) {
+      setActivities([]);
+      setSelectedActivityId("");
+      return;
+    }
+
+    fetchActivitiesByDay(selectedDayId)
+      .then((result) => {
+        setActivities(result);
+        setSelectedActivityId("");
+      })
+      .catch(() => setError("Falha ao carregar atividades do dia."));
+  }, [selectedDayId]);
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!file) {
@@ -63,6 +82,7 @@ export default function TripMemoriesPage({ params }: PageProps) {
       const presign = await createUploadPresign({
         trip_id: params.tripId,
         day_id: selectedDayId || undefined,
+        activity_id: selectedActivityId || undefined,
         filename: file.name,
         content_type: file.type || "application/octet-stream",
         file_size_bytes: file.size,
@@ -83,6 +103,7 @@ export default function TripMemoriesPage({ params }: PageProps) {
       await completeUpload({
         trip_id: params.tripId,
         day_id: selectedDayId || undefined,
+        activity_id: selectedActivityId || undefined,
         memory_type: memoryType,
         object_key: presign.object_key,
         caption,
@@ -130,6 +151,20 @@ export default function TripMemoriesPage({ params }: PageProps) {
               {days.map((day) => (
                 <option key={day.id} value={day.id}>
                   Dia {day.day_number}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="rounded-md border border-neutral-300 px-3 py-2"
+              value={selectedActivityId}
+              onChange={(event) => setSelectedActivityId(event.target.value)}
+              disabled={!selectedDayId}
+            >
+              <option value="">Sem atividade específica</option>
+              {activities.map((activity) => (
+                <option key={activity.id} value={activity.id}>
+                  {activity.title}
                 </option>
               ))}
             </select>

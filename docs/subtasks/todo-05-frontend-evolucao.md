@@ -5,7 +5,7 @@ Evoluir UI do MVP para fluxo completo de uso.
 
 ## Subtasks
 - [x] Criar tela/form de nova viagem
-- [ ] Criar edição e remoção de atividades
+- [x] Criar edição e remoção de atividades
 - [x] Criar página de timeline por viagem
 - [x] Criar página de memórias/galeria
 - [x] Integrar upload com presigned URL

@@ -109,9 +109,10 @@ Checklist do projeto com status atual da implementação.
 ## 🎯 Próximo marco sugerido (MVP funcional de ponta a ponta)
 
 - [ ] Criar viagem na UI
+- [x] Criar viagem na UI
 - [x] Editar dias/atividades na UI
 - [x] Upload de mídia via presigned URL
-- [ ] Registrar memória vinculada à atividade
+- [x] Registrar memória vinculada à atividade
 - [x] Exibir timeline por viagem
 - [ ] Consulta semântica simples (RAG v1)
 

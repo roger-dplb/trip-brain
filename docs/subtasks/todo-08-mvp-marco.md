@@ -7,7 +7,7 @@ Fechar o primeiro ciclo completo de valor para uso real.
 - [x] Criar viagem via interface web
 - [x] Editar dias e atividades via interface
 - [x] Upload de mídia via presigned URL
-- [ ] Registrar memória vinculada à atividade
+- [x] Registrar memória vinculada à atividade
 - [x] Exibir timeline da viagem
 - [ ] Executar consulta semântica RAG v1
 

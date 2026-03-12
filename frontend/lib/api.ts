@@ -211,6 +211,16 @@ export function updateActivity(
   );
 }
 
+export function deleteActivity(activityId: string): Promise<void> {
+  return request<void>(
+    `/activities/${activityId}`,
+    {
+      method: "DELETE",
+    },
+    API_BASE_PUBLIC,
+  );
+}
+
 export function createUploadPresign(payload: {
   trip_id: string;
   day_id?: string;

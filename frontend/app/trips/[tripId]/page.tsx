@@ -9,6 +9,7 @@ import {
   Trip,
   createActivity,
   createDay,
+  deleteActivity,
   fetchActivitiesByDay,
   fetchDaysByTrip,
   fetchTrip,
@@ -115,6 +116,15 @@ export default function TripDetailsPage({ params }: PageProps) {
     }
   }
 
+  async function onDeleteActivity(activityId: string) {
+    try {
+      await deleteActivity(activityId);
+      await loadTripData();
+    } catch {
+      setError("Não foi possível remover a atividade.");
+    }
+  }
+
   if (loading) {
     return <main className="mx-auto max-w-5xl p-6 text-sm">Carregando viagem...</main>;
   }
@@ -214,15 +224,24 @@ export default function TripDetailsPage({ params }: PageProps) {
                   (activitiesByDay[day.id] ?? []).map((activity) => (
                     <li key={activity.id} className="flex items-center justify-between rounded bg-neutral-50 p-2">
                       <span className="font-medium">{activity.title}</span>
-                      <select
-                        className="rounded border border-neutral-300 bg-white px-2 py-1 text-xs"
-                        value={activity.status}
-                        onChange={(event) => onUpdateActivityStatus(activity, event.target.value)}
-                      >
-                        <option value="planned">planned</option>
-                        <option value="done">done</option>
-                        <option value="skipped">skipped</option>
-                      </select>
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="rounded border border-neutral-300 bg-white px-2 py-1 text-xs"
+                          value={activity.status}
+                          onChange={(event) => onUpdateActivityStatus(activity, event.target.value)}
+                        >
+                          <option value="planned">planned</option>
+                          <option value="done">done</option>
+                          <option value="skipped">skipped</option>
+                        </select>
+                        <button
+                          className="rounded border border-red-300 px-2 py-1 text-xs text-red-700"
+                          onClick={() => onDeleteActivity(activity.id)}
+                          type="button"
+                        >
+                          Remover
+                        </button>
+                      </div>
                     </li>
                   ))
                 )}
