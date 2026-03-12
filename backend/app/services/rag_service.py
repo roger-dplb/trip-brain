@@ -90,7 +90,9 @@ class RagService:
         )
         day_ids = [day.id for day in days]
 
-        activities_by_day: dict[uuid.UUID, list[Activity]] = {day.id: [] for day in days}
+        activities_by_day: dict[uuid.UUID, list[Activity]] = {
+            day.id: [] for day in days
+        }
         if day_ids:
             activities = (
                 self.db.query(Activity)
