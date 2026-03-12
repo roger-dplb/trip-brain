@@ -10,7 +10,7 @@ Evoluir UI do MVP para fluxo completo de uso.
 - [x] Criar página de memórias/galeria
 - [x] Integrar upload com presigned URL
 - [x] Adicionar estados de loading, erro e empty state
-- [ ] Melhorar experiência mobile para ações rápidas
+- [x] Melhorar experiência mobile para ações rápidas
 
 ## Critérios de pronto
 - [ ] Fluxo principal de planejamento e registro acontece sem uso de API manual

@@ -134,24 +134,36 @@ export default function TripDetailsPage({ params }: PageProps) {
   }
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
+    <main className="mx-auto max-w-5xl p-4 pb-24 sm:p-6 sm:pb-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold">{trip.name}</h1>
         <p className="text-sm text-neutral-600">{trip.destination}</p>
         <p className="text-sm text-neutral-500">
           {trip.start_date} → {trip.end_date}
         </p>
-        <div className="mt-3 flex gap-3 text-sm">
-          <Link className="text-blue-700 underline" href={`/trips/${trip.id}/timeline`}>
+        <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:flex sm:gap-3">
+          <Link
+            className="rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href="#add-day"
+          >
+            Adicionar dia
+          </Link>
+          <Link
+            className="rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href={`/trips/${trip.id}/timeline`}
+          >
             Ver timeline
           </Link>
-          <Link className="text-blue-700 underline" href={`/trips/${trip.id}/memories`}>
+          <Link
+            className="rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href={`/trips/${trip.id}/memories`}
+          >
             Ver memórias
           </Link>
         </div>
       </header>
 
-      <section className="mb-8 rounded-lg border border-neutral-200 p-4">
+      <section className="mb-8 rounded-lg border border-neutral-200 p-4" id="add-day">
         <h2 className="mb-3 text-lg font-semibold">Adicionar dia</h2>
         <form className="grid gap-3 sm:grid-cols-3" onSubmit={onCreateDay}>
           <input
@@ -200,7 +212,10 @@ export default function TripDetailsPage({ params }: PageProps) {
                 />
               </label>
 
-              <form className="mb-3 flex gap-2" onSubmit={(event) => onCreateActivity(day.id, event)}>
+              <form
+                className="mb-3 flex flex-col gap-2 sm:flex-row"
+                onSubmit={(event) => onCreateActivity(day.id, event)}
+              >
                 <input
                   className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="Nova atividade"
@@ -212,7 +227,7 @@ export default function TripDetailsPage({ params }: PageProps) {
                     }))
                   }
                 />
-                <button className="rounded-md bg-black px-3 py-2 text-sm text-white" type="submit">
+                <button className="rounded-md bg-black px-3 py-2 text-sm text-white sm:w-auto" type="submit">
                   Adicionar
                 </button>
               </form>
@@ -222,9 +237,12 @@ export default function TripDetailsPage({ params }: PageProps) {
                   <li className="text-neutral-500">Sem atividades.</li>
                 ) : (
                   (activitiesByDay[day.id] ?? []).map((activity) => (
-                    <li key={activity.id} className="flex items-center justify-between rounded bg-neutral-50 p-2">
+                    <li
+                      key={activity.id}
+                      className="flex flex-col gap-2 rounded bg-neutral-50 p-2 sm:flex-row sm:items-center sm:justify-between"
+                    >
                       <span className="font-medium">{activity.title}</span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
                         <select
                           className="rounded border border-neutral-300 bg-white px-2 py-1 text-xs"
                           value={activity.status}
@@ -250,6 +268,29 @@ export default function TripDetailsPage({ params }: PageProps) {
           ))
         )}
       </section>
+
+      <nav className="fixed bottom-0 left-0 right-0 border-t border-neutral-200 bg-white p-3 sm:hidden">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 text-sm">
+          <Link
+            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href="#add-day"
+          >
+            + Dia
+          </Link>
+          <Link
+            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href={`/trips/${trip.id}/timeline`}
+          >
+            Timeline
+          </Link>
+          <Link
+            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href={`/trips/${trip.id}/memories`}
+          >
+            Memórias
+          </Link>
+        </div>
+      </nav>
     </main>
   );
 }

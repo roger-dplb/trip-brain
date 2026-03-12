@@ -120,15 +120,26 @@ export default function TripMemoriesPage({ params }: PageProps) {
   }
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
+    <main className="mx-auto max-w-5xl p-4 pb-24 sm:p-6 sm:pb-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold">Memórias da viagem</h1>
-        <Link className="text-sm text-blue-700 underline" href={`/trips/${params.tripId}`}>
-          Voltar para viagem
-        </Link>
+        <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:flex sm:gap-3">
+          <Link
+            className="rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href="#upload-memory"
+          >
+            Upload rápido
+          </Link>
+          <Link
+            className="rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href={`/trips/${params.tripId}`}
+          >
+            Voltar para viagem
+          </Link>
+        </div>
       </header>
 
-      <section className="mb-8 rounded-lg border border-neutral-200 p-4">
+      <section className="mb-8 rounded-lg border border-neutral-200 p-4" id="upload-memory">
         <h2 className="mb-3 text-lg font-semibold">Upload de memória</h2>
         <form className="space-y-3" onSubmit={onSubmit}>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -206,11 +217,28 @@ export default function TripMemoriesPage({ params }: PageProps) {
             <article key={memory.id} className="rounded border border-neutral-200 p-3 text-sm">
               <p className="font-medium">{memory.memory_type}</p>
               <p className="text-neutral-600">{memory.caption ?? "Sem legenda"}</p>
-              <p className="text-xs text-neutral-500">{memory.storage_key}</p>
+              <p className="break-all text-xs text-neutral-500">{memory.storage_key}</p>
             </article>
           ))
         )}
       </section>
+
+      <nav className="fixed bottom-0 left-0 right-0 border-t border-neutral-200 bg-white p-3 sm:hidden">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 text-sm">
+          <Link
+            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href="#upload-memory"
+          >
+            Upload
+          </Link>
+          <Link
+            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
+            href={`/trips/${params.tripId}`}
+          >
+            Voltar
+          </Link>
+        </div>
+      </nav>
     </main>
   );
 }

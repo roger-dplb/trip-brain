@@ -20,3 +20,17 @@ class SemanticQueryResponse(BaseModel):
     answer: str
     used_context: bool
     matches: list[SemanticQueryMatch]
+
+
+class ItineraryGenerationRequest(BaseModel):
+    trip_id: uuid.UUID
+    preferences: str | None = Field(default=None, max_length=2000)
+    max_days: int = Field(default=7, ge=1, le=21)
+
+
+class ItineraryGenerationResponse(BaseModel):
+    itinerary_markdown: str
+    provider: str
+    model: str
+    prompt_strategy: str
+    used_summary: bool

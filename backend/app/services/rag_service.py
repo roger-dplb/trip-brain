@@ -4,11 +4,17 @@ import uuid
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.activity import Activity
 from app.models.day import Day
 from app.models.memory import Memory
+from app.models.trip import Trip
 from app.repositories.embedding_repository import EmbeddingRepository
-from app.schemas.rag import SemanticQueryMatch, SemanticQueryResponse
+from app.schemas.rag import (
+    ItineraryGenerationResponse,
+    SemanticQueryMatch,
+    SemanticQueryResponse,
+)
 
 
 class RagService:
@@ -58,6 +64,57 @@ class RagService:
             answer="\n".join(answer_lines),
             used_context=True,
             matches=matches,
+        )
+
+    def generate_itinerary(
+        self,
+        trip_id: uuid.UUID,
+        preferences: str | None,
+        max_days: int,
+    ) -> ItineraryGenerationResponse:
+        trip = self.db.query(Trip).filter(Trip.id == trip_id).first()
+        if not trip:
+            return ItineraryGenerationResponse(
+                itinerary_markdown="# Roteiro inicial\n\nViagem não encontrada.",
+                provider=settings.itinerary_provider,
+                model=settings.itinerary_model,
+                prompt_strategy=settings.itinerary_prompt_strategy,
+                used_summary=False,
+            )
+
+        days = (
+            self.db.query(Day)
+            .filter(Day.trip_id == trip_id)
+            .order_by(Day.day_number.asc())
+            .all()
+        )
+        day_ids = [day.id for day in days]
+
+        activities_by_day: dict[uuid.UUID, list[Activity]] = {day.id: [] for day in days}
+        if day_ids:
+            activities = (
+                self.db.query(Activity)
+                .filter(Activity.day_id.in_(day_ids))
+                .order_by(Activity.created_at.asc())
+                .all()
+            )
+            for activity in activities:
+                activities_by_day.setdefault(activity.day_id, []).append(activity)
+
+        itinerary = self._build_itinerary_markdown(
+            trip=trip,
+            days=days,
+            activities_by_day=activities_by_day,
+            preferences=preferences,
+            max_days=max_days,
+        )
+
+        return ItineraryGenerationResponse(
+            itinerary_markdown=itinerary,
+            provider=settings.itinerary_provider,
+            model=settings.itinerary_model,
+            prompt_strategy=settings.itinerary_prompt_strategy,
+            used_summary=bool((trip.summary or "").strip()),
         )
 
     def _sync_trip_embeddings(self, trip_id: uuid.UUID) -> None:
@@ -151,3 +208,76 @@ class RagService:
         if norm == 0:
             return values
         return [value / norm for value in values]
+
+    def _build_itinerary_markdown(
+        self,
+        trip: Trip,
+        days: list[Day],
+        activities_by_day: dict[uuid.UUID, list[Activity]],
+        preferences: str | None,
+        max_days: int,
+    ) -> str:
+        lines = [
+            f"# Roteiro inicial · {trip.name}",
+            "",
+            f"Destino: {trip.destination}",
+            f"Período: {trip.start_date} até {trip.end_date}",
+            "",
+        ]
+
+        summary = (trip.summary or "").strip()
+        if summary:
+            lines.extend(["## Resumo da viagem", summary, ""])
+
+        preferences_text = (preferences or "").strip()
+        if preferences_text:
+            lines.extend(["## Preferências consideradas", preferences_text, ""])
+
+        lines.append("## Plano sugerido por dia")
+        if not days:
+            lines.extend(
+                [
+                    "- Dia 1: chegada, check-in e reconhecimento da região.",
+                    "- Dia 2: atividade principal do destino e jantar especial.",
+                    "- Dia 3: passeio leve e fechamento da viagem.",
+                ]
+            )
+            return "\n".join(lines)
+
+        for day in days[:max_days]:
+            label = f"Dia {day.day_number}"
+            if day.date:
+                label = f"{label} ({day.date})"
+            lines.append(f"### {label}")
+
+            activities = activities_by_day.get(day.id, [])
+            if not activities:
+                lines.append("- Manhã: passeio livre com foco nos pontos essenciais.")
+                lines.append("- Tarde: atividade cultural ou gastronômica local.")
+                lines.append("- Noite: jantar e revisão do plano do próximo dia.")
+            else:
+                for activity in activities[:5]:
+                    base = f"- {activity.title}"
+                    if activity.location:
+                        base = f"{base} · {activity.location}"
+                    lines.append(base)
+
+                if len(activities) > 5:
+                    lines.append(
+                        f"- +{len(activities) - 5} atividades já planejadas para este dia"
+                    )
+
+            if day.notes:
+                lines.append(f"- Nota do dia: {day.notes}")
+            lines.append("")
+
+        lines.extend(
+            [
+                "## Recomendações gerais",
+                "- Validar deslocamentos entre atividades para evitar correria.",
+                "- Reservar atrações concorridas com antecedência.",
+                "- Registrar memórias ao fim de cada dia para melhorar consultas futuras.",
+            ]
+        )
+
+        return "\n".join(lines)

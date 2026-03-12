@@ -4,8 +4,8 @@
 Entregar primeira versão do fluxo de geração de roteiro e consulta semântica.
 
 ## Subtasks
-- [ ] Definir provider/modelo LLM e estratégia de prompt
-- [ ] Implementar serviço de geração de roteiro por resumo
+- [x] Definir provider/modelo LLM e estratégia de prompt
+- [x] Implementar serviço de geração de roteiro por resumo
 - [ ] Implementar geração de embeddings no worker
 - [x] Persistir embeddings para atividades/notas/memórias
 - [x] Implementar busca vetorial (`top-k`) na tabela `embeddings`
