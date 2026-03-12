@@ -1,5 +1,6 @@
 from app.schemas.activity import ActivityCreate, ActivityRead, ActivityUpdate
 from app.schemas.day import DayCreate, DayRead, DayUpdate
+from app.schemas.error import ErrorBody, ErrorResponse
 from app.schemas.memory import MemoryCreate, MemoryRead, MemoryUpdate
 from app.schemas.timeline import TripTimelineRead
 from app.schemas.trip import TripCreate, TripRead, TripUpdate
@@ -17,6 +18,8 @@ __all__ = [
     "DayCreate",
     "DayRead",
     "DayUpdate",
+    "ErrorBody",
+    "ErrorResponse",
     "ActivityCreate",
     "ActivityRead",
     "ActivityUpdate",

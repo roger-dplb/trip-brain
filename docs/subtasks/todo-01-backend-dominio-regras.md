@@ -11,7 +11,7 @@ Cobrir regras de domínio e APIs faltantes do núcleo de viagem.
 - [x] Restringir status de atividade (`planned`, `done`, `skipped`)
 - [x] Adicionar paginação em listagens (`limit`, `offset`)
 - [x] Adicionar filtros básicos (`trip_id`, `day_id`, status, range de datas)
-- [ ] Padronizar respostas de erro (`404`, `422`, `409`)
+- [x] Padronizar respostas de erro (`404`, `422`, `409`)
 
 ## Critérios de pronto
 - [x] Endpoints com contratos Pydantic consistentes

@@ -33,6 +33,11 @@ def create_upload_url(
     payload: UploadPresignRequest,
     storage_service: StorageService = Depends(get_storage_service),
 ):
+    storage_service.validate_upload_request(
+        content_type=payload.content_type,
+        file_size_bytes=payload.file_size_bytes,
+    )
+
     object_key = storage_service.generate_object_key(
         trip_id=payload.trip_id,
         day_id=payload.day_id,

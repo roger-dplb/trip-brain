@@ -44,6 +44,39 @@ docker compose up --build
 - `GET/POST /api/v1/activities/`
 - `GET/PUT/DELETE /api/v1/activities/{activity_id}`
 
+## Erros padronizados da API
+
+As respostas de erro seguem o formato:
+
+```json
+{
+	"error": {
+		"code": "not_found|conflict|validation_error|http_error",
+		"message": "Mensagem de erro",
+		"details": null
+	}
+}
+```
+
+Status principais padronizados:
+
+- `404` → `not_found`
+- `409` → `conflict`
+- `422` → `validation_error`
+
+## Fluxo de upload (presigned URL)
+
+1. Frontend chama `POST /api/v1/uploads/presign` com `filename`, `content_type` e `file_size_bytes`.
+2. Backend valida tipo/tamanho e retorna URL temporária de upload.
+3. Frontend faz upload direto no MinIO via URL assinada.
+4. Frontend chama `POST /api/v1/uploads/complete` para persistir metadata da memória.
+
+Regras atuais de segurança/upload:
+
+- Objetos são enviados com ACL privada.
+- Tipos permitidos vêm de `ALLOWED_UPLOAD_CONTENT_TYPES`.
+- Tamanho máximo vem de `MAX_UPLOAD_SIZE_BYTES`.
+
 ## Observações
 
 - O `schema.sql` inicializa o PostgreSQL com `pgvector` e tabelas base.

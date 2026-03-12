@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 import boto3
+from fastapi import HTTPException, status
 from botocore.exceptions import ClientError
 
 from app.core.config import settings
@@ -13,6 +14,12 @@ class StorageService:
         self.bucket = settings.minio_bucket
         self.expires_in_seconds = settings.presigned_expires_in_seconds
         self.public_endpoint = settings.minio_public_endpoint
+        self.max_upload_size_bytes = settings.max_upload_size_bytes
+        self.allowed_content_types = {
+            value.strip()
+            for value in settings.allowed_upload_content_types.split(",")
+            if value.strip()
+        }
         self.client = boto3.client(
             "s3",
             endpoint_url=settings.minio_endpoint,
@@ -45,10 +52,36 @@ class StorageService:
                 "Bucket": self.bucket,
                 "Key": object_key,
                 "ContentType": content_type,
+                "ACL": "private",
             },
             ExpiresIn=self.expires_in_seconds,
         )
         return self._rewrite_to_public_endpoint(internal_url)
+
+    def validate_upload_request(self, content_type: str, file_size_bytes: int) -> None:
+        if content_type not in self.allowed_content_types:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Invalid content_type. Allowed values: "
+                    f"{sorted(self.allowed_content_types)}"
+                ),
+            )
+
+        if file_size_bytes <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="file_size_bytes must be greater than zero",
+            )
+
+        if file_size_bytes > self.max_upload_size_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "File is too large. Maximum allowed bytes: "
+                    f"{self.max_upload_size_bytes}"
+                ),
+            )
 
     def _ensure_bucket(self) -> None:
         try:

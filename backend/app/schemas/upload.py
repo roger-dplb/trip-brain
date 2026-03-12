@@ -10,6 +10,7 @@ class UploadPresignRequest(BaseModel):
     activity_id: uuid.UUID | None = None
     filename: str
     content_type: str
+    file_size_bytes: int
 
 
 class UploadPresignResponse(BaseModel):

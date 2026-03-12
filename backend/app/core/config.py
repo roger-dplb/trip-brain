@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     minio_bucket: str = "trip-archive"
     minio_region: str = "us-east-1"
     presigned_expires_in_seconds: int = 900
+    max_upload_size_bytes: int = 26214400
+    allowed_upload_content_types: str = "image/jpeg,image/png,image/webp,video/mp4"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
