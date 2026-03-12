@@ -11,7 +11,9 @@ export default async function TripsPage() {
     <main className="mx-auto max-w-4xl p-6">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Viagens</h1>
-        <Button>Novo viagem</Button>
+        <Link href="/trips/new">
+          <Button>Nova viagem</Button>
+        </Link>
       </div>
 
       {trips.length === 0 ? (

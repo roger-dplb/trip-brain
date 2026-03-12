@@ -59,13 +59,14 @@ Checklist do projeto com status atual da implementação.
 - [x] Endpoint de timeline por viagem
 - [x] Validações de domínio (datas da viagem, consistência de day_number, status permitidos)
 - [x] Paginação e filtros nos endpoints
-- [ ] Tratamento de erros padronizado (response model de erro)
+- [x] Tratamento de erros padronizado (response model de erro)
 
 ### Upload e storage
 - [x] Endpoint para geração de presigned URL (upload)
 - [x] Endpoint para metadata de mídia após upload
 - [x] Estrutura de bucket/prefix (`trips/{trip_id}/days/{day_id}/activities/{activity_id}/...`)
-- [ ] Política de retenção/segurança no MinIO
+- [x] Validação de tipo/tamanho no presign
+- [x] Política base de segurança no MinIO (upload privado)
 
 ### IA / RAG
 - [ ] Serviço de geração de roteiro com LLM
@@ -81,12 +82,12 @@ Checklist do projeto com status atual da implementação.
 - [ ] Resposta assistida por RAG via WhatsApp
 
 ### Frontend — evolução de produto
-- [ ] Tela de criação de viagem com formulário
+- [x] Tela de criação de viagem com formulário
 - [ ] Edição e remoção de atividades na UI
-- [ ] Tela de timeline (`/trips/[tripId]/timeline`)
-- [ ] Tela de memórias/galeria (`/trips/[tripId]/memories`)
-- [ ] Fluxo de upload com presigned URL
-- [ ] Feedback de carregamento/erro e estados vazios mais completos
+- [x] Tela de timeline (`/trips/[tripId]/timeline`)
+- [x] Tela de memórias/galeria (`/trips/[tripId]/memories`)
+- [x] Fluxo de upload com presigned URL
+- [x] Feedback de carregamento/erro e estados vazios mais completos
 
 ### Worker — processamento real
 - [ ] Consumo de fila/jobs (ex.: Redis/Celery/RQ)
@@ -108,10 +109,10 @@ Checklist do projeto com status atual da implementação.
 ## 🎯 Próximo marco sugerido (MVP funcional de ponta a ponta)
 
 - [ ] Criar viagem na UI
-- [ ] Editar dias/atividades na UI
-- [ ] Upload de mídia via presigned URL
+- [x] Editar dias/atividades na UI
+- [x] Upload de mídia via presigned URL
 - [ ] Registrar memória vinculada à atividade
-- [ ] Exibir timeline por viagem
+- [x] Exibir timeline por viagem
 - [ ] Consulta semântica simples (RAG v1)
 
 ---

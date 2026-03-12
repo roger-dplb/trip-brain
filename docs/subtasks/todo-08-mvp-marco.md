@@ -4,11 +4,11 @@
 Fechar o primeiro ciclo completo de valor para uso real.
 
 ## Subtasks
-- [ ] Criar viagem via interface web
-- [ ] Editar dias e atividades via interface
-- [ ] Upload de mídia via presigned URL
+- [x] Criar viagem via interface web
+- [x] Editar dias e atividades via interface
+- [x] Upload de mídia via presigned URL
 - [ ] Registrar memória vinculada à atividade
-- [ ] Exibir timeline da viagem
+- [x] Exibir timeline da viagem
 - [ ] Executar consulta semântica RAG v1
 
 ## Critérios de pronto
