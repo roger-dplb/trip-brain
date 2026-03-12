@@ -36,6 +36,11 @@ services:
     container_name: trip-archive-backend
     env_file:
       - ./backend/.env.example
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      ITINERARY_PROVIDER: ${ITINERARY_PROVIDER:-openai}
+      ITINERARY_MODEL: ${ITINERARY_MODEL:-gpt-5}
     ports:
       - "8000:8000"
     volumes:
@@ -71,9 +76,13 @@ services:
     container_name: trip-archive-worker
     environment:
       DATABASE_URL: postgresql+psycopg://trip_user:trip_pass@postgres:5432/trip_archive
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
+      MINIO_REGION: us-east-1
+      MINIO_BUCKET: trip-archive
       WORKER_POLL_INTERVAL: 15
     depends_on:
       postgres:

@@ -1,7 +1,6 @@
-import hashlib
-import math
 import uuid
 
+from openai import OpenAI
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -21,6 +20,7 @@ class RagService:
     def __init__(self, db: Session):
         self.db = db
         self.embedding_repository = EmbeddingRepository(db)
+        self.openai_client = OpenAI(api_key=settings.openai_api_key)
 
     def ask_trip(
         self, trip_id: uuid.UUID, query: str, top_k: int
@@ -101,7 +101,7 @@ class RagService:
             for activity in activities:
                 activities_by_day.setdefault(activity.day_id, []).append(activity)
 
-        itinerary = self._build_itinerary_markdown(
+        template_itinerary = self._build_itinerary_markdown(
             trip=trip,
             days=days,
             activities_by_day=activities_by_day,
@@ -109,12 +109,133 @@ class RagService:
             max_days=max_days,
         )
 
-        return ItineraryGenerationResponse(
-            itinerary_markdown=itinerary,
-            provider=settings.itinerary_provider,
+        used_summary = bool((trip.summary or "").strip())
+
+        if settings.itinerary_provider.lower() != "openai":
+            return ItineraryGenerationResponse(
+                itinerary_markdown=template_itinerary,
+                provider="template",
+                model="template-fallback-v1",
+                prompt_strategy=settings.itinerary_prompt_strategy,
+                used_summary=used_summary,
+            )
+
+        if not settings.openai_api_key:
+            return ItineraryGenerationResponse(
+                itinerary_markdown=template_itinerary,
+                provider="template",
+                model="template-fallback-v1",
+                prompt_strategy=settings.itinerary_prompt_strategy,
+                used_summary=used_summary,
+            )
+
+        try:
+            itinerary_from_openai = self._generate_itinerary_with_openai(
+                trip=trip,
+                days=days,
+                activities_by_day=activities_by_day,
+                preferences=preferences,
+                max_days=max_days,
+                template_itinerary=template_itinerary,
+            )
+
+            return ItineraryGenerationResponse(
+                itinerary_markdown=itinerary_from_openai,
+                provider="openai",
+                model=settings.itinerary_model,
+                prompt_strategy=settings.itinerary_prompt_strategy,
+                used_summary=used_summary,
+            )
+        except Exception:
+            return ItineraryGenerationResponse(
+                itinerary_markdown=template_itinerary,
+                provider="template",
+                model="template-fallback-v1",
+                prompt_strategy=settings.itinerary_prompt_strategy,
+                used_summary=used_summary,
+            )
+
+    def _generate_itinerary_with_openai(
+        self,
+        trip: Trip,
+        days: list[Day],
+        activities_by_day: dict[uuid.UUID, list[Activity]],
+        preferences: str | None,
+        max_days: int,
+        template_itinerary: str,
+    ) -> str:
+        prompt = self._build_itinerary_prompt(
+            trip=trip,
+            days=days,
+            activities_by_day=activities_by_day,
+            preferences=preferences,
+            max_days=max_days,
+            template_itinerary=template_itinerary,
+        )
+
+        response = self.openai_client.responses.create(
             model=settings.itinerary_model,
-            prompt_strategy=settings.itinerary_prompt_strategy,
-            used_summary=bool((trip.summary or "").strip()),
+            input=prompt,
+        )
+
+        itinerary = (getattr(response, "output_text", "") or "").strip()
+        if not itinerary:
+            raise RuntimeError("Empty itinerary returned by OpenAI")
+        return itinerary
+
+    def _build_itinerary_prompt(
+        self,
+        trip: Trip,
+        days: list[Day],
+        activities_by_day: dict[uuid.UUID, list[Activity]],
+        preferences: str | None,
+        max_days: int,
+        template_itinerary: str,
+    ) -> str:
+        preferences_text = (preferences or "").strip() or "Sem preferências explícitas"
+        summary_text = (trip.summary or "").strip() or "Sem resumo informado"
+
+        day_lines: list[str] = []
+        for day in days[:max_days]:
+            line = f"Dia {day.day_number}"
+            if day.date:
+                line = f"{line} ({day.date})"
+            activities = activities_by_day.get(day.id, [])
+            if activities:
+                line = f"{line}: " + "; ".join(
+                    [
+                        activity.title
+                        + (f" @ {activity.location}" if activity.location else "")
+                        for activity in activities[:6]
+                    ]
+                )
+            elif day.notes:
+                line = f"{line}: {day.notes}"
+            day_lines.append(line)
+
+        if not day_lines:
+            day_lines = ["Sem dias planejados ainda"]
+
+        return "\n".join(
+            [
+                "Você é um assistente de viagens para casal e deve responder em português do Brasil.",
+                "Gere um roteiro em Markdown, objetivo e prático, seguindo estritamente os dados abaixo.",
+                "Inclua seções: visão geral, plano por dia, recomendações finais.",
+                "Não invente atrações muito específicas se não houver contexto.",
+                "",
+                f"Viagem: {trip.name}",
+                f"Destino: {trip.destination}",
+                f"Período: {trip.start_date} até {trip.end_date}",
+                f"Resumo atual: {summary_text}",
+                f"Preferências: {preferences_text}",
+                f"Máximo de dias na resposta: {max_days}",
+                "",
+                "Contexto dos dias/atividades:",
+                *[f"- {line}" for line in day_lines],
+                "",
+                "Rascunho base (use como fallback de conteúdo, mas melhore quando possível):",
+                template_itinerary,
+            ]
         )
 
     def _sync_trip_embeddings(self, trip_id: uuid.UUID) -> None:
@@ -185,29 +306,19 @@ class RagService:
         ]
         return " | ".join([value for value in fields if value]).strip()
 
-    def _embed_text(self, text: str, dimensions: int = 1536) -> list[float]:
-        if not text.strip():
-            return [0.0] * dimensions
+    def _embed_text(self, text: str) -> list[float]:
+        clean_text = text.strip()
+        if not clean_text:
+            return [0.0] * 1536
 
-        seed = hashlib.sha256(text.encode("utf-8")).digest()
-        values: list[float] = []
-        counter = 0
+        if not settings.openai_api_key:
+            raise RuntimeError("OPENAI_API_KEY is required for embedding generation")
 
-        while len(values) < dimensions:
-            block = hashlib.sha256(seed + counter.to_bytes(4, byteorder="big")).digest()
-            for index in range(0, len(block), 4):
-                chunk = block[index : index + 4]
-                integer = int.from_bytes(chunk, byteorder="big", signed=False)
-                value = (integer / 4294967295.0) * 2.0 - 1.0
-                values.append(value)
-                if len(values) >= dimensions:
-                    break
-            counter += 1
-
-        norm = math.sqrt(sum(value * value for value in values))
-        if norm == 0:
-            return values
-        return [value / norm for value in values]
+        response = self.openai_client.embeddings.create(
+            model=settings.openai_embedding_model,
+            input=clean_text,
+        )
+        return list(response.data[0].embedding)
 
     def _build_itinerary_markdown(
         self,

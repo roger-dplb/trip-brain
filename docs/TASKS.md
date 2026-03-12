@@ -69,8 +69,8 @@ Checklist do projeto com status atual da implementação.
 - [x] Política base de segurança no MinIO (upload privado)
 
 ### IA / RAG
-- [ ] Serviço de geração de roteiro com LLM
-- [ ] Pipeline real de embeddings (producer/consumer)
+- [x] Serviço de geração de roteiro com LLM
+- [x] Pipeline real de embeddings (producer/consumer)
 - [x] Busca semântica em `embeddings`
 - [x] Montagem de contexto para resposta RAG
 - [x] Endpoints de consulta inteligente
@@ -90,10 +90,10 @@ Checklist do projeto com status atual da implementação.
 - [x] Feedback de carregamento/erro e estados vazios mais completos
 
 ### Worker — processamento real
-- [ ] Consumo de fila/jobs (ex.: Redis/Celery/RQ)
-- [ ] Geração de thumbnails de fotos/vídeos
-- [ ] Geração de embeddings para atividades/notas/memórias
-- [ ] Reprocessamento e retry de jobs com falha
+- [x] Consumo de fila/jobs (ex.: Redis/Celery/RQ)
+- [x] Geração de thumbnails de fotos/vídeos
+- [x] Geração de embeddings para atividades/notas/memórias
+- [x] Reprocessamento e retry de jobs com falha
 
 ### Qualidade, segurança e operação
 - [ ] Testes unitários backend
