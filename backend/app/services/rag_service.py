@@ -16,7 +16,9 @@ class RagService:
         self.db = db
         self.embedding_repository = EmbeddingRepository(db)
 
-    def ask_trip(self, trip_id: uuid.UUID, query: str, top_k: int) -> SemanticQueryResponse:
+    def ask_trip(
+        self, trip_id: uuid.UUID, query: str, top_k: int
+    ) -> SemanticQueryResponse:
         self._sync_trip_embeddings(trip_id)
 
         allowed_sources = self._allowed_sources_for_trip(trip_id)
