@@ -99,7 +99,7 @@ Checklist do projeto com status atual da implementação.
 - [ ] Testes unitários backend
 - [ ] Testes de integração API + DB
 - [ ] Testes frontend (componentes e páginas)
-- [ ] Lint/format automatizado no CI
+- [x] Lint/format automatizado no CI
 - [ ] Autenticação/autorização dos usuários do casal
 - [ ] Observabilidade (logs estruturados, métricas básicas)
 - [ ] Hardening de variáveis sensíveis (não usar credenciais padrão em produção)

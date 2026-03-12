@@ -7,7 +7,7 @@ Dar previsibilidade de entrega e segurança operacional.
 - [ ] Configurar testes unitários backend
 - [ ] Configurar testes de integração API + DB
 - [ ] Configurar testes frontend (componentes/páginas)
-- [ ] Configurar lint/format no CI
+- [x] Configurar lint/format no CI
 - [ ] Implementar autenticação/autorização do casal
 - [ ] Estruturar logs e métricas básicas
 - [ ] Remover credenciais padrão e adotar `.env` seguro
