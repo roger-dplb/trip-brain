@@ -8,3 +8,4 @@ python-multipart==0.0.20
 pgvector==0.4.1
 boto3==1.40.18
 openai==1.108.1
+prometheus-client==0.22.1

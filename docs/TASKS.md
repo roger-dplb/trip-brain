@@ -101,7 +101,7 @@ Checklist do projeto com status atual da implementação.
 - [x] Testes frontend (componentes e páginas)
 - [x] Lint/format automatizado no CI
 - [ ] Autenticação/autorização dos usuários do casal
-- [ ] Observabilidade (logs estruturados, métricas básicas)
+- [x] Observabilidade (logs estruturados, métricas básicas)
 - [ ] Hardening de variáveis sensíveis (não usar credenciais padrão em produção)
 
 ---

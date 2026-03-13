@@ -36,11 +36,13 @@ def run() -> None:
 
     storage_client, bucket = _build_storage_client()
 
-    print(
-        "Worker started: queue+consumer pipeline. "
-        f"poll_interval={interval}s enqueue_batch={enqueue_batch_size} "
-        f"consume_batch={consume_batch_size} max_retries={max_retries} "
-        f"embedding_model={openai_embedding_model}"
+    _log(
+        "worker_started",
+        poll_interval_seconds=interval,
+        enqueue_batch_size=enqueue_batch_size,
+        consume_batch_size=consume_batch_size,
+        max_retries=max_retries,
+        embedding_model=openai_embedding_model,
     )
 
     with psycopg.connect(database_url) as bootstrap_connection:

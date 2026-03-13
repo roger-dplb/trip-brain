@@ -9,7 +9,7 @@ Dar previsibilidade de entrega e segurança operacional.
 - [x] Configurar testes frontend (componentes/páginas)
 - [x] Configurar lint/format no CI
 - [ ] Implementar autenticação/autorização do casal
-- [ ] Estruturar logs e métricas básicas
+- [x] Estruturar logs e métricas básicas
 - [ ] Remover credenciais padrão e adotar `.env` seguro
 - [ ] Definir estratégia de backup para dados e mídia
 
