@@ -3,8 +3,6 @@ import logging
 import uuid
 
 from openai import OpenAI
-
-logger = logging.getLogger("trip_archive.rag")
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -23,6 +21,8 @@ from app.schemas.rag import (
     SemanticQueryMatch,
     SemanticQueryResponse,
 )
+
+logger = logging.getLogger("trip_archive.rag")
 
 
 class RagService:
