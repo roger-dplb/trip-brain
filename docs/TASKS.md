@@ -109,7 +109,6 @@ Checklist do projeto com status atual da implementação.
 
 ## 🎯 Próximo marco sugerido (MVP funcional de ponta a ponta)
 
-- [ ] Criar viagem na UI
 - [x] Criar viagem na UI
 - [x] Editar dias/atividades na UI
 - [x] Upload de mídia via presigned URL
