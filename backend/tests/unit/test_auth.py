@@ -66,3 +66,28 @@ def test_require_couple_auth_accepts_primary_partner_token() -> None:
         assert context.role == "owner"
     finally:
         _restore_settings(snapshot)
+
+
+def test_issue_and_accept_signed_session_token() -> None:
+    snapshot = {
+        "app_env": auth_module.settings.app_env,
+        "couple_auth_enabled": auth_module.settings.couple_auth_enabled,
+        "couple_auth_secret": auth_module.settings.couple_auth_secret,
+        "couple_access_token_ttl_minutes": auth_module.settings.couple_access_token_ttl_minutes,
+    }
+    try:
+        auth_module.settings.app_env = "development"
+        auth_module.settings.couple_auth_enabled = True
+        auth_module.settings.couple_auth_secret = "secret-123"
+        auth_module.settings.couple_access_token_ttl_minutes = 60
+
+        token, _expires_at = auth_module.issue_session_token(actor="ana")
+        credentials = HTTPAuthorizationCredentials(
+            scheme="Bearer",
+            credentials=token,
+        )
+
+        context = auth_module.require_couple_auth(credentials)
+        assert context.actor == "ana"
+    finally:
+        _restore_settings(snapshot)

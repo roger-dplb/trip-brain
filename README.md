@@ -49,12 +49,24 @@ export OPENAI_API_KEY=<chave-openai>
 export COUPLE_AUTH_ENABLED=true
 export COUPLE_PRIMARY_NAME=<nome-parceiro-1>
 export COUPLE_PRIMARY_TOKEN=<token-forte-1>
+export COUPLE_PRIMARY_USERNAME=<usuario-login-1>
+export COUPLE_PRIMARY_PASSWORD=<senha-login-1>
 export COUPLE_PARTNER_NAME=<nome-parceiro-2>
 export COUPLE_PARTNER_TOKEN=<token-forte-2>
+export COUPLE_PARTNER_USERNAME=<usuario-login-2>
+export COUPLE_PARTNER_PASSWORD=<senha-login-2>
+export COUPLE_AUTH_SECRET=<segredo-assinatura-token>
 ```
 
 - Backend e worker validam essas configurações na inicialização e falham se detectarem valores inseguros em `APP_ENV=production`.
 - Com `COUPLE_AUTH_ENABLED=true`, os endpoints em `/api/v1/*` exigem `Authorization: Bearer <token>`.
+
+## Login do casal
+
+- Endpoint público: `POST /api/v1/auth/login`
+- Payload: `{ "username": "...", "password": "..." }`
+- Resposta: token de sessão assinado com expiração
+- Frontend usa a página `/login` e salva o token localmente para chamadas autenticadas.
 
 ## Endpoints iniciais (MVP Base)
 

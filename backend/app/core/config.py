@@ -26,8 +26,14 @@ class Settings(BaseSettings):
     couple_auth_enabled: bool = False
     couple_primary_name: str = "partner_a"
     couple_primary_token: str = ""
+    couple_primary_username: str = ""
+    couple_primary_password: str = ""
     couple_partner_name: str = "partner_b"
     couple_partner_token: str = ""
+    couple_partner_username: str = ""
+    couple_partner_password: str = ""
+    couple_auth_secret: str = ""
+    couple_access_token_ttl_minutes: int = 720
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -81,6 +87,9 @@ class Settings(BaseSettings):
         auth_tokens = {
             "COUPLE_PRIMARY_TOKEN": self.couple_primary_token,
             "COUPLE_PARTNER_TOKEN": self.couple_partner_token,
+            "COUPLE_AUTH_SECRET": self.couple_auth_secret,
+            "COUPLE_PRIMARY_PASSWORD": self.couple_primary_password,
+            "COUPLE_PARTNER_PASSWORD": self.couple_partner_password,
         }
         weak_auth_keys = []
         for key, token in auth_tokens.items():

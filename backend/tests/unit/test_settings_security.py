@@ -26,8 +26,14 @@ def _build_settings(**overrides) -> Settings:
         "couple_auth_enabled": False,
         "couple_primary_name": "partner_a",
         "couple_primary_token": "",
+        "couple_primary_username": "",
+        "couple_primary_password": "",
         "couple_partner_name": "partner_b",
         "couple_partner_token": "",
+        "couple_partner_username": "",
+        "couple_partner_password": "",
+        "couple_auth_secret": "",
+        "couple_access_token_ttl_minutes": 720,
     }
     base.update(overrides)
     return Settings(**base)
@@ -53,8 +59,13 @@ def test_validate_sensitive_settings_allows_secure_production_values() -> None:
         couple_auth_enabled=True,
         couple_primary_name="roger",
         couple_primary_token="very_secure_token_1",
+        couple_primary_username="roger-login",
+        couple_primary_password="very_secure_password_1",
         couple_partner_name="ana",
         couple_partner_token="very_secure_token_2",
+        couple_partner_username="ana-login",
+        couple_partner_password="very_secure_password_2",
+        couple_auth_secret="very_secure_auth_secret",
         database_url="postgresql+psycopg://trip_user:super_secure_password@postgres:5432/trip_archive",
         minio_access_key="triparchive-user",
         minio_secret_key="ultra_secure_minio_password",

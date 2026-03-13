@@ -67,6 +67,14 @@ export type UploadPresignResponse = {
   expires_in: number;
 };
 
+export type LoginResponse = {
+  access_token: string;
+  token_type: "bearer";
+  expires_at: number;
+  actor: string;
+  role: string;
+};
+
 const API_BASE =
   process.env.INTERNAL_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??
@@ -77,8 +85,45 @@ const COUPLE_ACCESS_TOKEN =
   process.env.NEXT_PUBLIC_COUPLE_ACCESS_TOKEN ??
   "";
 
+const TOKEN_STORAGE_KEY = "trip_archive_access_token";
+
 export const API_BASE_PUBLIC =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+export function getStoredAccessToken(): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return window.localStorage.getItem(TOKEN_STORAGE_KEY) ?? "";
+}
+
+export function setStoredAccessToken(token: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+}
+
+export function clearStoredAccessToken(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+function resolveAccessToken(): string {
+  return getStoredAccessToken() || COUPLE_ACCESS_TOKEN;
+}
 
 async function request<T>(
   path: string,
@@ -86,8 +131,9 @@ async function request<T>(
   baseUrl: string = API_BASE,
 ): Promise<T> {
   const headers = new Headers(options?.headers);
-  if (COUPLE_ACCESS_TOKEN) {
-    headers.set("Authorization", `Bearer ${COUPLE_ACCESS_TOKEN}`);
+  const accessToken = resolveAccessToken();
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
   const response = await fetch(`${baseUrl}${path}`, {
@@ -97,7 +143,7 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed for ${path}`);
+    throw new ApiError(`API request failed for ${path}`, response.status);
   }
 
   if (response.status === 204) {
@@ -105,6 +151,21 @@ async function request<T>(
   }
 
   return response.json() as Promise<T>;
+}
+
+export function loginCouple(payload: {
+  username: string;
+  password: string;
+}): Promise<LoginResponse> {
+  return request<LoginResponse>(
+    "/auth/login",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+    API_BASE_PUBLIC,
+  );
 }
 
 export function fetchTrips(): Promise<Trip[]> {

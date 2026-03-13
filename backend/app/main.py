@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
+from app.api.routes import auth
 from app.core.config import settings
 from app.db.session import init_db
 
@@ -166,3 +167,4 @@ def metrics() -> PlainTextResponse:
 
 
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
