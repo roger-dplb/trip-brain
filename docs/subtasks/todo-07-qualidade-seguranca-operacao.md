@@ -11,7 +11,7 @@ Dar previsibilidade de entrega e segurança operacional.
 - [x] Implementar autenticação/autorização do casal
 - [x] Estruturar logs e métricas básicas
 - [x] Remover credenciais padrão e adotar `.env` seguro
-- [ ] Definir estratégia de backup para dados e mídia
+- [x] Definir estratégia de backup para dados e mídia
 
 ## Critérios de pronto
 - [x] Pipeline CI validando qualidade antes de merge

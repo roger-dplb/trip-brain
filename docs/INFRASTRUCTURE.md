@@ -71,3 +71,16 @@ build: ./backend
 
 worker  
 build: ./worker
+
+---
+
+## Backup e restore
+
+Estratégia documentada em:
+
+- [BACKUP_STRATEGY](BACKUP_STRATEGY.md)
+
+Scripts operacionais:
+
+- `./docker/backup/backup.sh`
+- `./docker/backup/restore.sh docker/backup/artifacts/<timestamp_utc>`

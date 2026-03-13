@@ -104,3 +104,9 @@ Regras atuais de segurança/upload:
 - O `schema.sql` inicializa o PostgreSQL com `pgvector` e tabelas base.
 - O backend já está preparado para expansão de RAG, upload via presigned URL e webhook de WhatsApp.
 - O worker está em modo skeleton para evoluir com filas/jobs reais na próxima fase.
+
+## Backup rápido
+
+- Gerar snapshot: `./docker/backup/backup.sh`
+- Restaurar snapshot: `./docker/backup/restore.sh docker/backup/artifacts/<timestamp_utc>`
+- Runbook completo: [docs/BACKUP_STRATEGY.md](docs/BACKUP_STRATEGY.md)

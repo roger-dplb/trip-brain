@@ -103,6 +103,7 @@ Checklist do projeto com status atual da implementação.
 - [x] Autenticação/autorização dos usuários do casal
 - [x] Observabilidade (logs estruturados, métricas básicas)
 - [x] Hardening de variáveis sensíveis (não usar credenciais padrão em produção)
+- [x] Estratégia de backup para banco e mídia
 
 ---
 
