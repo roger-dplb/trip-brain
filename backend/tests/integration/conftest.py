@@ -2,17 +2,16 @@ from collections.abc import Generator
 
 import app.main as main_module
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
-
 from app.db.session import get_db
 from app.main import app
 from app.models.activity import Activity
 from app.models.day import Day
 from app.models.memory import Memory
 from app.models.trip import Trip
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 
 @pytest.fixture()

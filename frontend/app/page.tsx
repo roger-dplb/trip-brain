@@ -1,5 +1,17 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+import { getStoredAccessToken } from "@/lib/api";
 
 export default function HomePage() {
-  redirect("/trips");
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = getStoredAccessToken();
+    router.replace(token ? "/trips" : "/login");
+  }, [router]);
+
+  return null;
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import {
   Activity,
@@ -18,6 +18,9 @@ type PageProps = {
   };
 };
 
+const inputClass =
+  "w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2.5 text-sm text-[#242424] placeholder-[#8b8b8b] focus:border-[#ff6b6b] focus:outline-none focus:ring-1 focus:ring-[#ff6b6b] transition-colors";
+
 export default function TripMemoriesPage({ params }: PageProps) {
   const [memories, setMemories] = useState<
     Array<{
@@ -25,6 +28,7 @@ export default function TripMemoriesPage({ params }: PageProps) {
       memory_type: string;
       caption?: string | null;
       storage_key: string;
+      public_url?: string | null;
       created_at: string;
       day_id?: string | null;
       activity_id?: string | null;
@@ -39,19 +43,20 @@ export default function TripMemoriesPage({ params }: PageProps) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ url: string; caption?: string | null } | null>(null);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     const [tripMemories, tripDays] = await Promise.all([
       fetchMemoriesByTrip(params.tripId),
       fetchDaysByTrip(params.tripId),
     ]);
     setMemories(tripMemories);
     setDays(tripDays.map((day) => ({ id: day.id, day_number: day.day_number })));
-  }
+  }, [params.tripId]);
 
   useEffect(() => {
     loadData().catch(() => setError("Falha ao carregar memórias."));
-  }, [params.tripId]);
+  }, [loadData]);
 
   useEffect(() => {
     if (!selectedDayId) {
@@ -59,7 +64,6 @@ export default function TripMemoriesPage({ params }: PageProps) {
       setSelectedActivityId("");
       return;
     }
-
     fetchActivitiesByDay(selectedDayId)
       .then((result) => {
         setActivities(result);
@@ -72,6 +76,11 @@ export default function TripMemoriesPage({ params }: PageProps) {
     event.preventDefault();
     if (!file) {
       setError("Selecione um arquivo.");
+      return;
+    }
+
+    if (memoryType !== "note" && !file) {
+      setError("Selecione uma foto ou vídeo.");
       return;
     }
 
@@ -90,15 +99,11 @@ export default function TripMemoriesPage({ params }: PageProps) {
 
       const uploadResponse = await fetch(presign.upload_url, {
         method: "PUT",
-        headers: {
-          "Content-Type": file.type || "application/octet-stream",
-        },
+        headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
 
-      if (!uploadResponse.ok) {
-        throw new Error("upload_failed");
-      }
+      if (!uploadResponse.ok) throw new Error("upload_failed");
 
       await completeUpload({
         trip_id: params.tripId,
@@ -119,126 +124,249 @@ export default function TripMemoriesPage({ params }: PageProps) {
     }
   }
 
+  const selectClass =
+    "w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2.5 text-sm text-[#242424] focus:border-[#ff6b6b] focus:outline-none focus:ring-1 focus:ring-[#ff6b6b] transition-colors";
+
+  function renderMemoryPreview(memory: (typeof memories)[number]) {
+    if (!memory.public_url) {
+      return null;
+    }
+
+    if (memory.memory_type === "photo") {
+      return (
+        <button
+          type="button"
+          className="relative mt-3 aspect-[4/3] w-full overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-[#fff9f6] cursor-zoom-in"
+          onClick={() => setLightbox({ url: memory.public_url!, caption: memory.caption })}
+        >
+          <Image
+            src={memory.public_url}
+            alt={memory.caption ?? "Memória da viagem"}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover hover:scale-105 transition-transform duration-300"
+            unoptimized
+          />
+        </button>
+      );
+    }
+
+    if (memory.memory_type === "video") {
+      return (
+        <video
+          className="mt-3 aspect-[4/3] w-full rounded-lg border border-[rgba(0,0,0,0.08)] bg-black object-cover"
+          controls
+          preload="metadata"
+          src={memory.public_url}
+        />
+      );
+    }
+
+    return null;
+  }
+
   return (
-    <main className="mx-auto max-w-5xl p-4 pb-24 sm:p-6 sm:pb-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">Memórias da viagem</h1>
-        <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:flex sm:gap-3">
-          <Link
-            className="rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
-            href="#upload-memory"
-          >
-            Upload rápido
-          </Link>
-          <Link
-            className="rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
-            href={`/trips/${params.tripId}`}
-          >
-            Voltar para viagem
-          </Link>
-        </div>
-      </header>
-
-      <section className="mb-8 rounded-lg border border-neutral-200 p-4" id="upload-memory">
-        <h2 className="mb-3 text-lg font-semibold">Upload de memória</h2>
-        <form className="space-y-3" onSubmit={onSubmit}>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <select
-              className="rounded-md border border-neutral-300 px-3 py-2"
-              value={memoryType}
-              onChange={(event) => setMemoryType(event.target.value)}
-            >
-              <option value="photo">photo</option>
-              <option value="video">video</option>
-              <option value="note">note</option>
-            </select>
-
-            <select
-              className="rounded-md border border-neutral-300 px-3 py-2"
-              value={selectedDayId}
-              onChange={(event) => setSelectedDayId(event.target.value)}
-            >
-              <option value="">Sem dia específico</option>
-              {days.map((day) => (
-                <option key={day.id} value={day.id}>
-                  Dia {day.day_number}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="rounded-md border border-neutral-300 px-3 py-2"
-              value={selectedActivityId}
-              onChange={(event) => setSelectedActivityId(event.target.value)}
-              disabled={!selectedDayId}
-            >
-              <option value="">Sem atividade específica</option>
-              {activities.map((activity) => (
-                <option key={activity.id} value={activity.id}>
-                  {activity.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <input
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
-            placeholder="Legenda"
-            value={caption}
-            onChange={(event) => setCaption(event.target.value)}
+    <>
+    {lightbox && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+        onClick={() => setLightbox(null)}
+      >
+        <button
+          type="button"
+          className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+          onClick={() => setLightbox(null)}
+          aria-label="Fechar"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightbox.url}
+            alt={lightbox.caption ?? "Memória da viagem"}
+            className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
           />
-
-          <input
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
-            type="file"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            required
-          />
-
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-          <button
-            className="rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-60"
-            disabled={loading}
-            type="submit"
-          >
-            {loading ? "Enviando..." : "Enviar memória"}
-          </button>
-        </form>
-      </section>
-
-      <section className="space-y-2">
-        {memories.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-6 text-sm text-neutral-600">
-            Nenhuma memória registrada ainda.
-          </div>
-        ) : (
-          memories.map((memory) => (
-            <article key={memory.id} className="rounded border border-neutral-200 p-3 text-sm">
-              <p className="font-medium">{memory.memory_type}</p>
-              <p className="text-neutral-600">{memory.caption ?? "Sem legenda"}</p>
-              <p className="break-all text-xs text-neutral-500">{memory.storage_key}</p>
-            </article>
-          ))
-        )}
-      </section>
-
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-neutral-200 bg-white p-3 sm:hidden">
-        <div className="mx-auto flex max-w-5xl items-center gap-2 text-sm">
-          <Link
-            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
-            href="#upload-memory"
-          >
-            Upload
-          </Link>
-          <Link
-            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-center text-blue-700 underline"
-            href={`/trips/${params.tripId}`}
-          >
-            Voltar
-          </Link>
+          {lightbox.caption && (
+            <p className="mt-3 text-center text-sm text-white/80">{lightbox.caption}</p>
+          )}
         </div>
-      </nav>
-    </main>
+      </div>
+    )}
+    <div className="min-h-screen">
+      {/* Page header */}
+      <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-12 py-8">
+        <h1 className="text-3xl font-bold text-[#242424]">Memórias</h1>
+        <p className="text-sm text-[#8b8b8b] mt-1">Fotos, vídeos e notas da viagem</p>
+      </div>
+
+      <div className="px-12 py-8 space-y-8">
+        {/* Upload form */}
+        <section className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-6">
+          <h2 className="text-lg font-semibold text-[#242424] mb-4">Upload de memória</h2>
+          <form className="space-y-4" onSubmit={onSubmit}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-[#242424] mb-1.5">Tipo</label>
+                <select
+                  className={selectClass}
+                  value={memoryType}
+                  onChange={(e) => {
+                    setMemoryType(e.target.value);
+                    if (e.target.value === "note") setFile(null);
+                  }}
+                >
+                  <option value="photo">Foto</option>
+                  <option value="video">Vídeo</option>
+                  <option value="note">Nota</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#242424] mb-1.5">Dia</label>
+                <select
+                  className={selectClass}
+                  value={selectedDayId}
+                  onChange={(e) => setSelectedDayId(e.target.value)}
+                >
+                  <option value="">Sem dia específico</option>
+                  {days.map((day) => (
+                    <option key={day.id} value={day.id}>
+                      Dia {day.day_number}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedDayId && (
+                <div>
+                  <label className="block text-sm font-medium text-[#242424] mb-1.5">
+                    Atividade
+                  </label>
+                  <select
+                    className={selectClass}
+                    value={selectedActivityId}
+                    onChange={(e) => setSelectedActivityId(e.target.value)}
+                    disabled={!selectedDayId}
+                  >
+                    <option value="">Sem atividade específica</option>
+                    {activities.map((activity) => (
+                      <option key={activity.id} value={activity.id}>
+                        {activity.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#242424] mb-1.5">Legenda</label>
+              <input
+                className={inputClass}
+                placeholder="Uma descrição desta memória..."
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+              />
+            </div>
+
+            {memoryType !== "note" && (
+              <div>
+                <label className="block text-sm font-medium text-[#242424] mb-1.5">
+                  {memoryType === "photo" ? "Foto" : memoryType === "video" ? "Vídeo" : "Arquivo"}
+                </label>
+                <label className="flex flex-col items-center justify-center w-full min-h-[120px] rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.15)] bg-[#fafafa] hover:bg-[#f3ece8] hover:border-[#ff6b6b] transition-colors cursor-pointer group relative">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const selected = e.target.files?.[0] ?? null;
+                      setFile(selected);
+                      if (selected) {
+                        if (selected.type.startsWith("video/")) setMemoryType("video");
+                        else if (selected.type.startsWith("image/")) setMemoryType("photo");
+                      }
+                    }}
+                    required={memoryType !== "note"}
+                  />
+                  {file ? (
+                    <div className="flex flex-col items-center gap-2 px-4 py-4 text-center">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        {file.type.startsWith("video/") ? (
+                          <><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></>
+                        ) : (
+                          <><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></>
+                        )}
+                      </svg>
+                      <p className="text-sm font-medium text-[#242424] max-w-[200px] truncate">{file.name}</p>
+                      <p className="text-xs text-[#8b8b8b]">{(file.size / 1024 / 1024).toFixed(1)} MB · clique para trocar</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c0b5ae" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:stroke-[#ff6b6b] transition-colors">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      <p className="text-sm text-[#8b8b8b] group-hover:text-[#242424] transition-colors">
+                        Clique para selecionar <span className="font-medium text-[#ff6b6b]">foto ou vídeo</span>
+                      </p>
+                      <p className="text-xs text-[#c0b5ae]">JPG, PNG, GIF, MP4, MOV…</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+            )}
+
+            <button
+              className="rounded-lg bg-[#ff6b6b] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-60"
+              disabled={loading}
+              type="submit"
+            >
+              {loading ? "Enviando..." : "Enviar memória"}
+            </button>
+          </form>
+        </section>
+
+        {/* Memories list */}
+        <section>
+          <h2 className="text-lg font-semibold text-[#242424] mb-4">
+            {memories.length > 0 ? `${memories.length} memórias` : "Memórias"}
+          </h2>
+          {memories.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] p-12 text-center">
+              <p className="text-[#8b8b8b] text-sm">Nenhuma memória registrada ainda.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {memories.map((memory) => (
+                <article
+                  key={memory.id}
+                  className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-xs font-semibold text-[#ff6b6b] capitalize bg-[#f3ece8] px-2 py-0.5 rounded-full">
+                      {memory.memory_type}
+                    </span>
+                    <span className="text-xs text-[#8b8b8b]">
+                      {new Date(memory.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-[#242424] mt-2">
+                    {memory.caption ?? "Sem legenda"}
+                  </p>
+                  {renderMemoryPreview(memory)}
+                  <p className="text-xs text-[#8b8b8b] mt-1 break-all">{memory.storage_key}</p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+    </>
   );
 }

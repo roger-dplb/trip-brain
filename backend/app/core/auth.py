@@ -1,10 +1,10 @@
-from dataclasses import dataclass
 import base64
 import hashlib
 import hmac
 import json
-from secrets import compare_digest
 import time
+from dataclasses import dataclass
+from secrets import compare_digest
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer

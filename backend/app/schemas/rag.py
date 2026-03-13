@@ -34,3 +34,5 @@ class ItineraryGenerationResponse(BaseModel):
     model: str
     prompt_strategy: str
     used_summary: bool
+    days_created: int = 0
+    activities_created: int = 0

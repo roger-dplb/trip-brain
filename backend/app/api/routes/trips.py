@@ -15,6 +15,7 @@ from app.schemas.timeline import (
     TripTimelineRead,
 )
 from app.schemas.trip import TripCreate, TripRead, TripUpdate
+from app.services.storage_service import StorageService
 from app.services.trip_service import TripService
 
 router = APIRouter()
@@ -68,6 +69,7 @@ def get_trip_timeline(trip_id: uuid.UUID, db: Session = Depends(get_db)):
     day_repository = DayRepository(db)
     activity_repository = ActivityRepository(db)
     memory_repository = MemoryRepository(db)
+    storage_service = StorageService()
 
     days = day_repository.list(trip_id=trip_id, limit=1000, offset=0)
 
@@ -102,6 +104,9 @@ def get_trip_timeline(trip_id: uuid.UUID, db: Session = Depends(get_db)):
                         memory_type=memory.memory_type,
                         caption=memory.caption,
                         storage_key=memory.storage_key,
+                        public_url=storage_service.build_public_object_url(
+                            memory.storage_key
+                        ),
                         created_at=memory.created_at,
                     )
                     for memory in memories

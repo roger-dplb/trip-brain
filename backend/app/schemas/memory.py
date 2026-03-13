@@ -33,4 +33,5 @@ class MemoryRead(MemoryBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    public_url: str | None = None
     created_at: datetime

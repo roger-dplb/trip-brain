@@ -33,6 +33,7 @@ export type Memory = {
   activity_id?: string | null;
   memory_type: string;
   storage_key: string;
+  public_url?: string | null;
   caption?: string | null;
   taken_at?: string | null;
   created_at: string;
@@ -56,6 +57,7 @@ export type Timeline = {
       memory_type: string;
       caption?: string | null;
       storage_key: string;
+      public_url?: string | null;
       created_at: string;
     }>;
   }>;
@@ -130,7 +132,8 @@ async function request<T>(
   options?: RequestInit,
   baseUrl: string = API_BASE,
 ): Promise<T> {
-  const headers = new Headers(options?.headers);
+  const { headers: optionHeaders, ...restOptions } = options ?? {};
+  const headers = new Headers(optionHeaders);
   const accessToken = resolveAccessToken();
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
@@ -138,8 +141,8 @@ async function request<T>(
 
   const response = await fetch(`${baseUrl}${path}`, {
     cache: "no-store",
+    ...restOptions,
     headers,
-    ...options,
   });
 
   if (!response.ok) {
@@ -293,6 +296,16 @@ export function deleteActivity(activityId: string): Promise<void> {
   );
 }
 
+export function deleteDay(dayId: string): Promise<void> {
+  return request<void>(
+    `/days/${dayId}`,
+    {
+      method: "DELETE",
+    },
+    API_BASE_PUBLIC,
+  );
+}
+
 export function createUploadPresign(payload: {
   trip_id: string;
   day_id?: string;
@@ -303,6 +316,32 @@ export function createUploadPresign(payload: {
 }): Promise<UploadPresignResponse> {
   return request<UploadPresignResponse>(
     "/uploads/presign",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+    API_BASE_PUBLIC,
+  );
+}
+
+export type ItineraryResponse = {
+  itinerary_markdown: string;
+  provider: string;
+  model: string;
+  prompt_strategy: string;
+  used_summary: boolean;
+  days_created: number;
+  activities_created: number;
+};
+
+export function generateItinerary(payload: {
+  trip_id: string;
+  preferences?: string;
+  max_days?: number;
+}): Promise<ItineraryResponse> {
+  return request<ItineraryResponse>(
+    "/rag/itinerary",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

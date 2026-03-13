@@ -1,10 +1,11 @@
+import json
 import uuid
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 import boto3
-from fastapi import HTTPException, status
 from botocore.exceptions import ClientError
+from fastapi import HTTPException, status
 
 from app.core.config import settings
 
@@ -52,11 +53,17 @@ class StorageService:
                 "Bucket": self.bucket,
                 "Key": object_key,
                 "ContentType": content_type,
-                "ACL": "private",
             },
             ExpiresIn=self.expires_in_seconds,
         )
         return self._rewrite_to_public_endpoint(internal_url)
+
+    def build_public_object_url(self, object_key: str | None) -> str | None:
+        if not object_key:
+            return None
+
+        base_endpoint = self.public_endpoint.rstrip("/")
+        return f"{base_endpoint}/{self.bucket}/{object_key.lstrip('/')}"
 
     def validate_upload_request(self, content_type: str, file_size_bytes: int) -> None:
         if content_type not in self.allowed_content_types:
@@ -88,6 +95,21 @@ class StorageService:
             self.client.head_bucket(Bucket=self.bucket)
         except ClientError:
             self.client.create_bucket(Bucket=self.bucket)
+
+        public_read_policy = json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {"AWS": ["*"]},
+                        "Action": ["s3:GetObject"],
+                        "Resource": [f"arn:aws:s3:::{self.bucket}/*"],
+                    }
+                ],
+            }
+        )
+        self.client.put_bucket_policy(Bucket=self.bucket, Policy=public_read_policy)
 
     def _rewrite_to_public_endpoint(self, internal_url: str) -> str:
         parsed_internal = urlparse(internal_url)

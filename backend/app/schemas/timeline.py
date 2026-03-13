@@ -18,6 +18,7 @@ class TimelineMemory(BaseModel):
     memory_type: str
     caption: str | None
     storage_key: str | None
+    public_url: str | None = None
     created_at: datetime
 
 

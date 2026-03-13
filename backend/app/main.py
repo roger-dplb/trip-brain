@@ -1,21 +1,20 @@
-from contextlib import asynccontextmanager
 import json
 import logging
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
-from starlette.requests import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 
 from app.api.router import api_router
 from app.api.routes import auth
 from app.core.config import settings
 from app.db.session import init_db
-
 
 logger = logging.getLogger("trip_archive.api")
 

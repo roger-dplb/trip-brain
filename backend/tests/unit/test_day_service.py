@@ -2,10 +2,9 @@ import uuid
 from types import SimpleNamespace
 
 import pytest
-from fastapi import HTTPException
-
 from app.schemas.day import DayCreate, DayUpdate
 from app.services.day_service import DayService
+from fastapi import HTTPException
 
 
 class FakeDayRepository:
@@ -29,7 +28,9 @@ class FakeDayRepository:
 
 def test_create_rejects_duplicate_day_number() -> None:
     trip_id = uuid.uuid4()
-    repository = FakeDayRepository(existing=SimpleNamespace(id=uuid.uuid4(), trip_id=trip_id))
+    repository = FakeDayRepository(
+        existing=SimpleNamespace(id=uuid.uuid4(), trip_id=trip_id)
+    )
     service = DayService(repository=repository)
 
     payload = DayCreate(trip_id=trip_id, day_number=1)

@@ -1,6 +1,11 @@
+import json
+import logging
 import uuid
 
 from openai import OpenAI
+
+logger = logging.getLogger("trip_archive.rag")
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -8,7 +13,11 @@ from app.models.activity import Activity
 from app.models.day import Day
 from app.models.memory import Memory
 from app.models.trip import Trip
+from app.repositories.activity_repository import ActivityRepository
+from app.repositories.day_repository import DayRepository
 from app.repositories.embedding_repository import EmbeddingRepository
+from app.schemas.activity import ActivityCreate
+from app.schemas.day import DayCreate
 from app.schemas.rag import (
     ItineraryGenerationResponse,
     SemanticQueryMatch,
@@ -132,7 +141,13 @@ class RagService:
             )
 
         try:
-            itinerary_from_openai = self._generate_itinerary_with_openai(
+            logger.info(
+                "itinerary: calling openai model=%s trip_id=%s max_days=%d",
+                settings.itinerary_model,
+                trip_id,
+                max_days,
+            )
+            structured = self._generate_structured_itinerary_with_openai(
                 trip=trip,
                 days=days,
                 activities_by_day=activities_by_day,
@@ -140,15 +155,34 @@ class RagService:
                 max_days=max_days,
                 template_itinerary=template_itinerary,
             )
+            logger.info(
+                "itinerary: openai response received, days_in_response=%d",
+                len(structured.get("days", [])),
+            )
+
+            days_created, activities_created = self._persist_itinerary(
+                trip_id=trip_id,
+                structured_days=structured.get("days", []),
+            )
+            logger.info(
+                "itinerary: persisted days_created=%d activities_created=%d",
+                days_created,
+                activities_created,
+            )
 
             return ItineraryGenerationResponse(
-                itinerary_markdown=itinerary_from_openai,
+                itinerary_markdown=structured.get("markdown", template_itinerary),
                 provider="openai",
                 model=settings.itinerary_model,
                 prompt_strategy=settings.itinerary_prompt_strategy,
                 used_summary=used_summary,
+                days_created=days_created,
+                activities_created=activities_created,
             )
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "itinerary: openai failed, using template fallback error=%s", exc
+            )
             return ItineraryGenerationResponse(
                 itinerary_markdown=template_itinerary,
                 provider="template",
@@ -157,7 +191,7 @@ class RagService:
                 used_summary=used_summary,
             )
 
-    def _generate_itinerary_with_openai(
+    def _generate_structured_itinerary_with_openai(
         self,
         trip: Trip,
         days: list[Day],
@@ -165,7 +199,7 @@ class RagService:
         preferences: str | None,
         max_days: int,
         template_itinerary: str,
-    ) -> str:
+    ) -> dict:
         prompt = self._build_itinerary_prompt(
             trip=trip,
             days=days,
@@ -175,15 +209,87 @@ class RagService:
             template_itinerary=template_itinerary,
         )
 
+        logger.info("itinerary: prompt built, prompt_chars=%d", len(prompt))
+        logger.info("itinerary: sending request to openai, this may take 15-30s...")
+
         response = self.openai_client.responses.create(
             model=settings.itinerary_model,
             input=prompt,
         )
 
-        itinerary = (getattr(response, "output_text", "") or "").strip()
-        if not itinerary:
-            raise RuntimeError("Empty itinerary returned by OpenAI")
-        return itinerary
+        logger.info("itinerary: openai responded, extracting output_text")
+        raw = (getattr(response, "output_text", "") or "").strip()
+        logger.info("itinerary: raw_response_chars=%d raw_preview=%r", len(raw), raw[:200])
+
+        if not raw:
+            raise RuntimeError("Empty response from OpenAI")
+
+        # Strip markdown code fences if present
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+
+        logger.info("itinerary: parsing JSON response")
+        parsed = json.loads(raw)
+        logger.info(
+            "itinerary: JSON parsed ok, days=%d markdown_chars=%d",
+            len(parsed.get("days", [])),
+            len(parsed.get("markdown", "")),
+        )
+        return parsed
+
+    def _persist_itinerary(
+        self,
+        trip_id: uuid.UUID,
+        structured_days: list[dict],
+    ) -> tuple[int, int]:
+        day_repo = DayRepository(self.db)
+        activity_repo = ActivityRepository(self.db)
+        days_created = 0
+        activities_created = 0
+
+        for day_data in structured_days:
+            day_number = int(day_data.get("day_number", 0))
+            if not day_number:
+                continue
+
+            existing = day_repo.find_by_trip_and_day_number(trip_id, day_number)
+            if existing:
+                day = existing
+            else:
+                day = day_repo.create(
+                    DayCreate(
+                        trip_id=trip_id,
+                        day_number=day_number,
+                        date=day_data.get("date") or None,
+                        notes=day_data.get("notes") or None,
+                    )
+                )
+                days_created += 1
+
+            for act in day_data.get("activities", []):
+                title = (act.get("title") or "").strip()
+                if not title:
+                    continue
+                existing_activity = self.db.query(Activity).filter(
+                    Activity.day_id == day.id,
+                    func.lower(Activity.title) == func.lower(title),
+                ).first()
+                if existing_activity:
+                    continue
+                activity_repo.create(
+                    ActivityCreate(
+                        day_id=day.id,
+                        title=title,
+                        location=act.get("location") or None,
+                        notes=act.get("notes") or None,
+                        status="planned",
+                    )
+                )
+                activities_created += 1
+
+        return days_created, activities_created
 
     def _build_itinerary_prompt(
         self,
@@ -220,22 +326,40 @@ class RagService:
 
         return "\n".join(
             [
-                "Você é um assistente de viagens para casal e deve responder em português do Brasil.",
-                "Gere um roteiro em Markdown, objetivo e prático, seguindo estritamente os dados abaixo.",
-                "Inclua seções: visão geral, plano por dia, recomendações finais.",
-                "Não invente atrações muito específicas se não houver contexto.",
+                "Você é um assistente de viagens para casal. Responda APENAS com um objeto JSON válido, sem texto adicional.",
+                "",
+                "O JSON deve seguir exatamente esta estrutura:",
+                "{",
+                '  "markdown": "<roteiro completo em Markdown com seções: visão geral, plano por dia, recomendações finais>",',
+                '  "days": [',
+                "    {",
+                '      "day_number": 1,',
+                '      "date": "YYYY-MM-DD ou null",',
+                '      "notes": "resumo do dia em 1-2 frases ou null",',
+                '      "activities": [',
+                '        {"title": "nome da atividade", "location": "local ou null", "notes": "dica ou null"}',
+                "      ]",
+                "    }",
+                "  ]",
+                "}",
+                "",
+                "Regras:",
+                "- Gere entre 1 e {max_days} dias".format(max_days=max_days),
+                "- Cada dia deve ter entre 2 e 5 atividades",
+                "- Não invente atrações muito específicas se não houver contexto",
+                "- Use os dados da viagem abaixo como base",
+                "- Se já existem atividades planejadas, inclua-as e complemente",
                 "",
                 f"Viagem: {trip.name}",
                 f"Destino: {trip.destination}",
                 f"Período: {trip.start_date} até {trip.end_date}",
                 f"Resumo atual: {summary_text}",
                 f"Preferências: {preferences_text}",
-                f"Máximo de dias na resposta: {max_days}",
                 "",
-                "Contexto dos dias/atividades:",
+                "Contexto dos dias/atividades já existentes:",
                 *[f"- {line}" for line in day_lines],
                 "",
-                "Rascunho base (use como fallback de conteúdo, mas melhore quando possível):",
+                "Rascunho base para referência de conteúdo:",
                 template_itinerary,
             ]
         )

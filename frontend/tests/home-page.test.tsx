@@ -4,17 +4,38 @@ import { vi } from "vitest";
 
 import HomePage from "@/app/page";
 
-const redirectMock = vi.hoisted(() => vi.fn());
+const replaceMock = vi.hoisted(() => vi.fn());
+const tokenMock = vi.hoisted(() => ({ value: "" }));
 
 vi.mock("next/navigation", () => ({
-  redirect: redirectMock,
+  useRouter: () => ({
+    replace: replaceMock,
+  }),
+}));
+
+vi.mock("@/lib/api", () => ({
+  getStoredAccessToken: () => tokenMock.value,
 }));
 
 describe("HomePage", () => {
-  it("redirects user to /trips", () => {
+  beforeEach(() => {
+    replaceMock.mockClear();
+    tokenMock.value = "";
+  });
+
+  it("redirects user to /login when there is no session token", () => {
     render(<HomePage />);
 
-    expect(redirectMock).toHaveBeenCalledTimes(1);
-    expect(redirectMock).toHaveBeenCalledWith("/trips");
+    expect(replaceMock).toHaveBeenCalledTimes(1);
+    expect(replaceMock).toHaveBeenCalledWith("/login");
+  });
+
+  it("redirects user to /trips when a session token exists", () => {
+    tokenMock.value = "test-token";
+
+    render(<HomePage />);
+
+    expect(replaceMock).toHaveBeenCalledTimes(1);
+    expect(replaceMock).toHaveBeenCalledWith("/trips");
   });
 });

@@ -1,8 +1,7 @@
 import pytest
+from app.core import auth as auth_module
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-
-from app.core import auth as auth_module
 
 
 def _restore_settings(snapshot: dict[str, object]) -> None:

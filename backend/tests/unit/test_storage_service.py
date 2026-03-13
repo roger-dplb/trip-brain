@@ -2,9 +2,8 @@ import uuid
 from urllib.parse import urlparse
 
 import pytest
-from fastapi import HTTPException
-
 from app.services.storage_service import StorageService
+from fastapi import HTTPException
 
 
 class FakeS3Client:
@@ -25,7 +24,9 @@ def _build_service(monkeypatch) -> StorageService:
     fake_client = FakeS3Client(
         "http://minio:9000/trip-archive/path/to/object.jpg?X-Amz-Signature=123"
     )
-    monkeypatch.setattr("app.services.storage_service.boto3.client", lambda *args, **kwargs: fake_client)
+    monkeypatch.setattr(
+        "app.services.storage_service.boto3.client", lambda *args, **kwargs: fake_client
+    )
     return StorageService()
 
 

@@ -3,10 +3,9 @@ from datetime import date
 from types import SimpleNamespace
 
 import pytest
-from fastapi import HTTPException
-
 from app.schemas.trip import TripCreate, TripUpdate
 from app.services.trip_service import TripService
+from fastapi import HTTPException
 
 
 class FakeTripRepository:
