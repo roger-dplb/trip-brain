@@ -197,12 +197,12 @@ export default function TripMemoriesPage({ params }: PageProps) {
     )}
     <div className="min-h-screen">
       {/* Page header */}
-      <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-12 py-8">
-        <h1 className="text-3xl font-bold text-[#242424]">Memórias</h1>
+      <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#242424]">Memórias</h1>
         <p className="text-sm text-[#8b8b8b] mt-1">Fotos, vídeos e notas da viagem</p>
       </div>
 
-      <div className="px-12 py-8 space-y-8">
+      <div className="px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-8">
         {/* Upload form */}
         <section className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-6">
           <h2 className="text-lg font-semibold text-[#242424] mb-4">Upload de memória</h2>
@@ -322,7 +322,7 @@ export default function TripMemoriesPage({ params }: PageProps) {
             )}
 
             <button
-              className="rounded-lg bg-[#ff6b6b] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-60"
+              className="w-full sm:w-auto rounded-lg bg-[#ff6b6b] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-60"
               disabled={loading}
               type="submit"
             >
@@ -337,7 +337,7 @@ export default function TripMemoriesPage({ params }: PageProps) {
             {memories.length > 0 ? `${memories.length} memórias` : "Memórias"}
           </h2>
           {memories.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] p-12 text-center">
+            <div className="rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] p-8 sm:p-12 text-center">
               <p className="text-[#8b8b8b] text-sm">Nenhuma memória registrada ainda.</p>
             </div>
           ) : (

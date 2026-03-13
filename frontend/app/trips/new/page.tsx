@@ -70,12 +70,12 @@ export default function NewTripPage() {
   return (
     <div className="min-h-screen bg-[#fff9f6]">
       <header className="bg-white border-b border-[rgba(0,0,0,0.08)]">
-        <div className="mx-auto max-w-2xl px-6 py-4 flex items-center justify-between">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="text-[#ff6b6b]">
               <HeartSolid />
             </span>
-            <span className="text-xl font-bold text-[#ff6b6b]">Roger e Ana</span>
+            <span className="text-lg sm:text-xl font-bold text-[#ff6b6b]">Roger e Ana</span>
           </div>
           <Link
             href="/trips"
@@ -87,13 +87,13 @@ export default function NewTripPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-6 py-8">
+      <main className="mx-auto max-w-2xl px-4 sm:px-6 py-6 sm:py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#242424]">Nova viagem</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#242424]">Nova viagem</h1>
           <p className="text-sm text-[#8b8b8b] mt-1">Planeje mais uma aventura juntos</p>
         </div>
 
-        <section className="bg-white rounded-2xl border border-[rgba(0,0,0,0.08)] shadow-sm p-6">
+        <section className="bg-white rounded-2xl border border-[rgba(0,0,0,0.08)] shadow-sm p-5 sm:p-6">
           <form className="space-y-5" onSubmit={onSubmit}>
             <div>
               <label className="block text-sm font-medium text-[#242424] mb-1.5">

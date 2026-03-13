@@ -118,12 +118,12 @@ export default function ItineraryPage({ params }: PageProps) {
   return (
     <div className="min-h-screen">
       {/* Page header */}
-      <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-12 py-8">
-        <h1 className="text-3xl font-bold text-[#242424]">Roteiro com IA</h1>
+      <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#242424]">Roteiro com IA</h1>
         <p className="text-sm text-[#8b8b8b] mt-1">Gere um roteiro personalizado automaticamente</p>
       </div>
 
-      <div className="px-12 py-8 space-y-8 max-w-3xl">
+      <div className="px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-8 max-w-3xl">
         {/* Form */}
         <section className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-6">
           <form className="space-y-5" onSubmit={onSubmit}>
@@ -195,7 +195,7 @@ export default function ItineraryPage({ params }: PageProps) {
           <>
             {/* Success banner */}
             {result.days_created > 0 && (
-              <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4">
+              <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <p className="text-sm text-green-700 font-medium">
                   ✓ {result.days_created} {result.days_created === 1 ? "dia criado" : "dias criados"} com {result.activities_created} {result.activities_created === 1 ? "atividade" : "atividades"} na Visão Geral.
                 </p>
@@ -209,7 +209,7 @@ export default function ItineraryPage({ params }: PageProps) {
             )}
 
             <section className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-6">
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <h2 className="text-lg font-semibold text-[#242424]">Roteiro gerado</h2>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-[#8b8b8b] bg-[#f3ece8] px-2.5 py-1 rounded-full">

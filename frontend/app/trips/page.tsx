@@ -81,14 +81,14 @@ export default function TripsPage() {
     <div className="min-h-screen bg-[#fff9f6]">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-[rgba(0,0,0,0.08)]">
-        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <span className="text-[#ff6b6b]">
               <HeartSolid />
             </span>
-            <span className="text-xl font-bold text-[#ff6b6b]">Roger e Ana</span>
+            <span className="text-lg sm:text-xl font-bold text-[#ff6b6b]">Roger e Ana</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full sm:w-auto items-center justify-end gap-2 sm:gap-3">
             <Link href="/trips/new">
               <Button>
                 <PlusIcon />
@@ -107,7 +107,7 @@ export default function TripsPage() {
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#242424]">Nossas Viagens</h1>
           <p className="text-sm text-[#8b8b8b] mt-1">Todas as aventuras do casal</p>
@@ -127,7 +127,7 @@ export default function TripsPage() {
             {error}
           </div>
         ) : trips.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] p-12 text-center">
+          <div className="rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] p-8 sm:p-12 text-center">
             <p className="text-[#8b8b8b] text-sm mb-4">Nenhuma viagem cadastrada ainda.</p>
             <Link href="/trips/new">
               <Button>Criar primeira viagem</Button>

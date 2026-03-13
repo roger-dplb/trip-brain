@@ -57,19 +57,19 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fff9f6] flex items-center justify-center p-6">
+    <main className="min-h-screen bg-[#fff9f6] flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md">
         {/* Brand */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
+        <div className="flex items-center justify-center gap-2.5 mb-6 sm:mb-8">
           <span className="text-[#ff6b6b]">
             <HeartSolid />
           </span>
-          <span className="text-2xl font-bold text-[#ff6b6b]">Roger e Ana</span>
+          <span className="text-xl sm:text-2xl font-bold text-[#ff6b6b]">Roger e Ana</span>
         </div>
 
         {/* Card */}
-        <section className="bg-white rounded-2xl border border-[rgba(0,0,0,0.08)] shadow-sm p-8">
-          <h1 className="text-2xl font-bold text-[#242424] mb-1">Bem-vindos de volta</h1>
+        <section className="bg-white rounded-2xl border border-[rgba(0,0,0,0.08)] shadow-sm p-5 sm:p-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#242424] mb-1">Bem-vindos de volta</h1>
           <p className="text-sm text-[#8b8b8b] mb-6">Acesse o diário de viagem do casal.</p>
 
           <form className="space-y-4" onSubmit={onSubmit}>

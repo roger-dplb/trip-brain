@@ -106,12 +106,31 @@ function ArrowLeft() {
   );
 }
 
+function XIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 type Props = {
   trip: Trip | null;
   tripId: string;
+  isOpen?: boolean;
+  onClose?: () => void;
 };
 
-export function TripSidebar({ trip, tripId }: Props) {
+export function TripSidebar({ trip, tripId, isOpen = false, onClose }: Props) {
   const pathname = usePathname();
 
   const navItems = [
@@ -122,61 +141,91 @@ export function TripSidebar({ trip, tripId }: Props) {
   ];
 
   return (
-    <aside className="w-[280px] shrink-0 h-full overflow-y-auto bg-white border-r border-[rgba(0,0,0,0.08)] flex flex-col px-6 py-6 gap-8">
-      {/* Logo */}
-      <div className="flex items-center gap-2.5">
-        <span className="text-[#ff6b6b]">
-          <HeartSolid />
-        </span>
-        <span className="text-[20px] font-bold text-[#ff6b6b]">Roger e Ana</span>
-      </div>
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Nav */}
-      <nav className="flex flex-col gap-1">
-        {navItems.map(({ href, label, icon }) => {
-          const isActive = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] font-medium transition-colors",
-                isActive
-                  ? "bg-[#ff6b6b] text-white"
-                  : "text-[#8b8b8b] hover:bg-[#f3ece8] hover:text-[#242424]",
-              )}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 w-[280px] shrink-0 h-full overflow-y-auto bg-white border-r border-[rgba(0,0,0,0.08)] flex flex-col px-6 py-6 gap-8 transition-transform duration-300",
+          "md:static md:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-[#ff6b6b]">
+              <HeartSolid />
+            </span>
+            <span className="text-[20px] font-bold text-[#ff6b6b]">Roger e Ana</span>
+          </div>
+          {onClose && (
+            <button
+              className="md:hidden p-1 rounded-lg text-[#8b8b8b] hover:text-[#242424] hover:bg-[#f3ece8] transition-colors"
+              onClick={onClose}
+              aria-label="Fechar menu"
             >
-              {icon}
-              <span>{label}</span>
-            </Link>
-          );
-        })}
-        <div className="border-t border-[rgba(0,0,0,0.06)] my-2" />
-        <Link
-          href="/trips"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] font-medium text-[#8b8b8b] hover:bg-[#f3ece8] hover:text-[#242424] transition-colors"
-        >
-          <ArrowLeft />
-          <span>Todas as viagens</span>
-        </Link>
-      </nav>
-
-      <div className="flex-1" />
-
-      {/* Trip info card */}
-      {trip && (
-        <div className="bg-[#f3ece8] rounded-xl p-4">
-          <p className="font-semibold text-[#242424] text-sm">{trip.name}</p>
-          {trip.destination && (
-            <p className="text-xs text-[#8b8b8b] mt-1">{trip.destination}</p>
-          )}
-          {trip.start_date && trip.end_date && (
-            <p className="text-xs text-[#8b8b8b] mt-0.5">
-              {trip.start_date} → {trip.end_date}
-            </p>
+              <XIcon />
+            </button>
           )}
         </div>
-      )}
-    </aside>
+
+        {/* Nav */}
+        <nav className="flex flex-col gap-1">
+          {navItems.map(({ href, label, icon }) => {
+            const isActive = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] font-medium transition-colors",
+                  isActive
+                    ? "bg-[#ff6b6b] text-white"
+                    : "text-[#8b8b8b] hover:bg-[#f3ece8] hover:text-[#242424]",
+                )}
+              >
+                {icon}
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+          <div className="border-t border-[rgba(0,0,0,0.06)] my-2" />
+          <Link
+            href="/trips"
+            onClick={onClose}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] font-medium text-[#8b8b8b] hover:bg-[#f3ece8] hover:text-[#242424] transition-colors"
+          >
+            <ArrowLeft />
+            <span>Todas as viagens</span>
+          </Link>
+        </nav>
+
+        <div className="flex-1" />
+
+        {/* Trip info card */}
+        {trip && (
+          <div className="bg-[#f3ece8] rounded-xl p-4">
+            <p className="font-semibold text-[#242424] text-sm">{trip.name}</p>
+            {trip.destination && (
+              <p className="text-xs text-[#8b8b8b] mt-1">{trip.destination}</p>
+            )}
+            {trip.start_date && trip.end_date && (
+              <p className="text-xs text-[#8b8b8b] mt-0.5">
+                {trip.start_date} → {trip.end_date}
+              </p>
+            )}
+          </div>
+        )}
+      </aside>
+    </>
   );
 }

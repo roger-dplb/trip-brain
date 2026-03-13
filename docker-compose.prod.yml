@@ -1,0 +1,115 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: trip-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: trip_archive
+      POSTGRES_USER: trip_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/001-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trip_user -d trip_archive"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: trip-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # S3 API (exposto para presigned URLs públicas)
+      - "9001:9001"   # Console de administração
+    volumes:
+      - minio_data:/data
+
+  backend:
+    image: ghcr.io/roger-dplb/trip-brain-backend:latest
+    container_name: trip-backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+psycopg://trip_user:${POSTGRES_PASSWORD}@postgres:5432/trip_archive
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: trip-archive
+      MINIO_REGION: us-east-1
+      PRESIGNED_EXPIRES_IN_SECONDS: 900
+      MAX_UPLOAD_SIZE_BYTES: 26214400
+      ALLOWED_UPLOAD_CONTENT_TYPES: image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      ITINERARY_PROVIDER: ${ITINERARY_PROVIDER:-openai}
+      ITINERARY_MODEL: ${ITINERARY_MODEL:-gpt-4o}
+      ITINERARY_PROMPT_STRATEGY: summary-first-day-by-day
+      COUPLE_AUTH_ENABLED: ${COUPLE_AUTH_ENABLED:-true}
+      COUPLE_AUTH_SECRET: ${COUPLE_AUTH_SECRET}
+      COUPLE_ACCESS_TOKEN_TTL_MINUTES: ${COUPLE_ACCESS_TOKEN_TTL_MINUTES:-720}
+      COUPLE_PRIMARY_NAME: ${COUPLE_PRIMARY_NAME}
+      COUPLE_PRIMARY_USERNAME: ${COUPLE_PRIMARY_USERNAME}
+      COUPLE_PRIMARY_PASSWORD: ${COUPLE_PRIMARY_PASSWORD}
+      COUPLE_PRIMARY_TOKEN: ${COUPLE_PRIMARY_TOKEN}
+      COUPLE_PARTNER_NAME: ${COUPLE_PARTNER_NAME}
+      COUPLE_PARTNER_USERNAME: ${COUPLE_PARTNER_USERNAME}
+      COUPLE_PARTNER_PASSWORD: ${COUPLE_PARTNER_PASSWORD}
+      COUPLE_PARTNER_TOKEN: ${COUPLE_PARTNER_TOKEN}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  frontend:
+    image: ghcr.io/roger-dplb/trip-brain-frontend:latest
+    container_name: trip-frontend
+    restart: unless-stopped
+    environment:
+      INTERNAL_API_BASE_URL: http://backend:8000/api/v1
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+      NEXT_PUBLIC_AUTH_ENABLED: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  worker:
+    image: ghcr.io/roger-dplb/trip-brain-worker:latest
+    container_name: trip-worker
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+psycopg://trip_user:${POSTGRES_PASSWORD}@postgres:5432/trip_archive
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_REGION: us-east-1
+      MINIO_BUCKET: trip-archive
+      WORKER_POLL_INTERVAL: 15
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  minio_data:

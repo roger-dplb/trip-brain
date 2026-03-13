@@ -161,8 +161,8 @@ export default function TripTimelinePage({ params }: PageProps) {
     )}
     <div className="min-h-screen">
       {/* Page header */}
-      <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-12 py-8">
-        <h1 className="text-3xl font-bold text-[#242424]">Timeline</h1>
+      <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#242424]">Timeline</h1>
         {(trip.start_date || trip.end_date) && (
           <p className="text-sm text-[#8b8b8b] mt-1">
             {[trip.start_date, trip.end_date].filter(Boolean).join(" → ")}
@@ -170,9 +170,9 @@ export default function TripTimelinePage({ params }: PageProps) {
         )}
       </div>
 
-      <div className="px-12 py-8">
+      <div className="px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
         {timeline.days.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] p-12 text-center">
+          <div className="rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] p-8 sm:p-12 text-center">
             <p className="text-[#8b8b8b] text-sm">Nenhum item na timeline ainda.</p>
           </div>
         ) : (
@@ -183,7 +183,7 @@ export default function TripTimelinePage({ params }: PageProps) {
                 className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] overflow-hidden"
               >
                 {/* Day header */}
-                <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-6 py-4 flex items-center justify-between">
+                <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-[#ff6b6b] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
                       {day.day_number}
@@ -193,7 +193,7 @@ export default function TripTimelinePage({ params }: PageProps) {
                   {day.date && <span className="text-sm text-[#8b8b8b]">{day.date}</span>}
                 </div>
 
-                <div className="p-6 grid sm:grid-cols-2 gap-6">
+                <div className="p-4 sm:p-6 grid sm:grid-cols-2 gap-6">
                   {/* Activities */}
                   <div>
                     <p className="text-xs font-semibold text-[#8b8b8b] uppercase tracking-wide mb-3">
