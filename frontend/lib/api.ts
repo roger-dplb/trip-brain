@@ -72,6 +72,11 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8000/api/v1";
 
+const COUPLE_ACCESS_TOKEN =
+  process.env.COUPLE_ACCESS_TOKEN ??
+  process.env.NEXT_PUBLIC_COUPLE_ACCESS_TOKEN ??
+  "";
+
 export const API_BASE_PUBLIC =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
@@ -80,8 +85,14 @@ async function request<T>(
   options?: RequestInit,
   baseUrl: string = API_BASE,
 ): Promise<T> {
+  const headers = new Headers(options?.headers);
+  if (COUPLE_ACCESS_TOKEN) {
+    headers.set("Authorization", `Bearer ${COUPLE_ACCESS_TOKEN}`);
+  }
+
   const response = await fetch(`${baseUrl}${path}`, {
     cache: "no-store",
+    headers,
     ...options,
   });
 

@@ -46,9 +46,15 @@ export POSTGRES_PASSWORD=<senha-forte>
 export MINIO_ROOT_USER=<usuario-forte>
 export MINIO_ROOT_PASSWORD=<senha-forte>
 export OPENAI_API_KEY=<chave-openai>
+export COUPLE_AUTH_ENABLED=true
+export COUPLE_PRIMARY_NAME=<nome-parceiro-1>
+export COUPLE_PRIMARY_TOKEN=<token-forte-1>
+export COUPLE_PARTNER_NAME=<nome-parceiro-2>
+export COUPLE_PARTNER_TOKEN=<token-forte-2>
 ```
 
 - Backend e worker validam essas configurações na inicialização e falham se detectarem valores inseguros em `APP_ENV=production`.
+- Com `COUPLE_AUTH_ENABLED=true`, os endpoints em `/api/v1/*` exigem `Authorization: Bearer <token>`.
 
 ## Endpoints iniciais (MVP Base)
 

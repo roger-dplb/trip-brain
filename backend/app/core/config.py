@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     itinerary_provider: str = "openai"
     itinerary_model: str = "gpt-5"
     itinerary_prompt_strategy: str = "summary-first-day-by-day"
+    couple_auth_enabled: bool = False
+    couple_primary_name: str = "partner_a"
+    couple_primary_token: str = ""
+    couple_partner_name: str = "partner_b"
+    couple_partner_token: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -66,6 +71,27 @@ class Settings(BaseSettings):
             raise RuntimeError(
                 "Insecure sensitive settings for production: "
                 + ", ".join(insecure_keys)
+            )
+
+        if not self.couple_auth_enabled:
+            raise RuntimeError(
+                "COUPLE_AUTH_ENABLED must be true when APP_ENV=production"
+            )
+
+        auth_tokens = {
+            "COUPLE_PRIMARY_TOKEN": self.couple_primary_token,
+            "COUPLE_PARTNER_TOKEN": self.couple_partner_token,
+        }
+        weak_auth_keys = []
+        for key, token in auth_tokens.items():
+            token_lc = (token or "").strip().lower()
+            if not token_lc or token_lc in insecure_values:
+                weak_auth_keys.append(key)
+
+        if weak_auth_keys:
+            raise RuntimeError(
+                "Insecure couple auth tokens for production: "
+                + ", ".join(weak_auth_keys)
             )
 
 

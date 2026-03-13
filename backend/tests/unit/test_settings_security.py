@@ -23,6 +23,11 @@ def _build_settings(**overrides) -> Settings:
         "itinerary_provider": "openai",
         "itinerary_model": "gpt-5",
         "itinerary_prompt_strategy": "summary-first-day-by-day",
+        "couple_auth_enabled": False,
+        "couple_primary_name": "partner_a",
+        "couple_primary_token": "",
+        "couple_partner_name": "partner_b",
+        "couple_partner_token": "",
     }
     base.update(overrides)
     return Settings(**base)
@@ -45,6 +50,11 @@ def test_validate_sensitive_settings_blocks_insecure_production_values() -> None
 def test_validate_sensitive_settings_allows_secure_production_values() -> None:
     settings = _build_settings(
         app_env="production",
+        couple_auth_enabled=True,
+        couple_primary_name="roger",
+        couple_primary_token="very_secure_token_1",
+        couple_partner_name="ana",
+        couple_partner_token="very_secure_token_2",
         database_url="postgresql+psycopg://trip_user:super_secure_password@postgres:5432/trip_archive",
         minio_access_key="triparchive-user",
         minio_secret_key="ultra_secure_minio_password",
