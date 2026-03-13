@@ -219,7 +219,9 @@ class RagService:
 
         logger.info("itinerary: openai responded, extracting output_text")
         raw = (getattr(response, "output_text", "") or "").strip()
-        logger.info("itinerary: raw_response_chars=%d raw_preview=%r", len(raw), raw[:200])
+        logger.info(
+            "itinerary: raw_response_chars=%d raw_preview=%r", len(raw), raw[:200]
+        )
 
         if not raw:
             raise RuntimeError("Empty response from OpenAI")
@@ -272,10 +274,14 @@ class RagService:
                 title = (act.get("title") or "").strip()
                 if not title:
                     continue
-                existing_activity = self.db.query(Activity).filter(
-                    Activity.day_id == day.id,
-                    func.lower(Activity.title) == func.lower(title),
-                ).first()
+                existing_activity = (
+                    self.db.query(Activity)
+                    .filter(
+                        Activity.day_id == day.id,
+                        func.lower(Activity.title) == func.lower(title),
+                    )
+                    .first()
+                )
                 if existing_activity:
                     continue
                 activity_repo.create(
