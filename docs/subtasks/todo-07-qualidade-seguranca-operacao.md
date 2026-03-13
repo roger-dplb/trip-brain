@@ -4,7 +4,7 @@
 Dar previsibilidade de entrega e segurança operacional.
 
 ## Subtasks
-- [ ] Configurar testes unitários backend
+- [x] Configurar testes unitários backend
 - [ ] Configurar testes de integração API + DB
 - [ ] Configurar testes frontend (componentes/páginas)
 - [x] Configurar lint/format no CI
@@ -14,5 +14,5 @@ Dar previsibilidade de entrega e segurança operacional.
 - [ ] Definir estratégia de backup para dados e mídia
 
 ## Critérios de pronto
-- [ ] Pipeline CI validando qualidade antes de merge
+- [x] Pipeline CI validando qualidade antes de merge
 - [ ] Ambiente local e produção com configurações seguras

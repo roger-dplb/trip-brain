@@ -96,7 +96,7 @@ Checklist do projeto com status atual da implementação.
 - [x] Reprocessamento e retry de jobs com falha
 
 ### Qualidade, segurança e operação
-- [ ] Testes unitários backend
+- [x] Testes unitários backend
 - [ ] Testes de integração API + DB
 - [ ] Testes frontend (componentes e páginas)
 - [x] Lint/format automatizado no CI
