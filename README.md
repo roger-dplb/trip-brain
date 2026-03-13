@@ -35,6 +35,21 @@ docker compose up --build
 - MinIO API: http://localhost:9000
 - MinIO Console: http://localhost:9001
 
+## Segurança de ambiente (produção)
+
+- Não use credenciais padrão (`minioadmin`, `trip_pass`) em produção.
+- Defina variáveis seguras antes de subir os serviços:
+
+```bash
+export APP_ENV=production
+export POSTGRES_PASSWORD=<senha-forte>
+export MINIO_ROOT_USER=<usuario-forte>
+export MINIO_ROOT_PASSWORD=<senha-forte>
+export OPENAI_API_KEY=<chave-openai>
+```
+
+- Backend e worker validam essas configurações na inicialização e falham se detectarem valores inseguros em `APP_ENV=production`.
+
 ## Endpoints iniciais (MVP Base)
 
 - `GET/POST /api/v1/trips/`

@@ -5,6 +5,7 @@ import os
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 import boto3
 import psycopg
@@ -15,7 +16,47 @@ JOB_TYPE_EMBEDDING = "embedding_generation"
 JOB_TYPE_THUMBNAIL = "thumbnail_generation"
 
 
+def _ensure_production_secure_settings() -> None:
+    app_env = os.getenv("APP_ENV", "development").lower()
+    if app_env not in {"production", "prod"}:
+        return
+
+    insecure_tokens = {
+        "minioadmin",
+        "trip_pass",
+        "changeme",
+        "change-me",
+        "password",
+        "123456",
+        "admin",
+    }
+
+    insecure_keys: list[str] = []
+
+    minio_access_key = os.getenv("MINIO_ACCESS_KEY", "").strip().lower()
+    if not minio_access_key or minio_access_key in insecure_tokens:
+        insecure_keys.append("MINIO_ACCESS_KEY")
+
+    minio_secret_key = os.getenv("MINIO_SECRET_KEY", "").strip().lower()
+    if not minio_secret_key or minio_secret_key in insecure_tokens:
+        insecure_keys.append("MINIO_SECRET_KEY")
+
+    database_url = os.getenv("DATABASE_URL", "")
+    parsed = urlparse(_normalize_database_url(database_url))
+    db_password = (parsed.password or "").strip().lower()
+    if not db_password or db_password in insecure_tokens:
+        insecure_keys.append("DATABASE_URL")
+
+    if insecure_keys:
+        raise RuntimeError(
+            "Insecure sensitive settings for production in worker: "
+            + ", ".join(insecure_keys)
+        )
+
+
 def run() -> None:
+    _ensure_production_secure_settings()
+
     interval = int(os.getenv("WORKER_POLL_INTERVAL", "15"))
     enqueue_batch_size = int(os.getenv("WORKER_ENQUEUE_BATCH_SIZE", "50"))
     consume_batch_size = int(os.getenv("WORKER_CONSUME_BATCH_SIZE", "25"))

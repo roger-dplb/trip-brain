@@ -102,7 +102,7 @@ Checklist do projeto com status atual da implementação.
 - [x] Lint/format automatizado no CI
 - [ ] Autenticação/autorização dos usuários do casal
 - [x] Observabilidade (logs estruturados, métricas básicas)
-- [ ] Hardening de variáveis sensíveis (não usar credenciais padrão em produção)
+- [x] Hardening de variáveis sensíveis (não usar credenciais padrão em produção)
 
 ---
 

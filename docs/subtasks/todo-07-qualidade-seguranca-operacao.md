@@ -10,9 +10,9 @@ Dar previsibilidade de entrega e segurança operacional.
 - [x] Configurar lint/format no CI
 - [ ] Implementar autenticação/autorização do casal
 - [x] Estruturar logs e métricas básicas
-- [ ] Remover credenciais padrão e adotar `.env` seguro
+- [x] Remover credenciais padrão e adotar `.env` seguro
 - [ ] Definir estratégia de backup para dados e mídia
 
 ## Critérios de pronto
 - [x] Pipeline CI validando qualidade antes de merge
-- [ ] Ambiente local e produção com configurações seguras
+- [x] Ambiente local e produção com configurações seguras

@@ -40,6 +40,7 @@ def _configure_logging() -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     _configure_logging()
+    settings.validate_sensitive_settings()
     init_db()
     yield
 

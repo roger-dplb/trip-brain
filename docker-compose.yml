@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: trip_archive
       POSTGRES_USER: trip_user
-      POSTGRES_PASSWORD: trip_pass
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trip_pass}
     ports:
       - "5432:5432"
     volumes:
@@ -21,8 +21,8 @@ services:
     image: minio/minio:latest
     container_name: trip-archive-minio
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
@@ -37,6 +37,7 @@ services:
     env_file:
       - ./backend/.env.example
     environment:
+      APP_ENV: ${APP_ENV:-development}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
       ITINERARY_PROVIDER: ${ITINERARY_PROVIDER:-openai}
@@ -75,12 +76,13 @@ services:
       context: ./worker
     container_name: trip-archive-worker
     environment:
-      DATABASE_URL: postgresql+psycopg://trip_user:trip_pass@postgres:5432/trip_archive
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: postgresql+psycopg://trip_user:${POSTGRES_PASSWORD:-trip_pass}@postgres:5432/trip_archive
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_REGION: us-east-1
       MINIO_BUCKET: trip-archive
       WORKER_POLL_INTERVAL: 15
