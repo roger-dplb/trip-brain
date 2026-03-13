@@ -16,6 +16,9 @@ class FakeS3Client:
     def create_bucket(self, Bucket):
         return None
 
+    def put_bucket_policy(self, Bucket, Policy):
+        return None
+
     def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
         return self.presigned_url
 

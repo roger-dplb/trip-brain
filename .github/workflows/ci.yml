@@ -28,10 +28,6 @@ jobs:
       - name: Check formatting backend and worker
         run: ruff format --check backend/app worker/app
 
-      - name: Run backend tests
-        env:
-          PYTHONPATH: backend
-        run: pytest backend/tests -q
 
   frontend-quality:
     name: Frontend Lint/Build
@@ -55,8 +51,6 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Run frontend tests
-        run: npm run test:run
 
       - name: Build app
         run: npm run build

@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from unittest.mock import MagicMock, patch
 
 import app.main as main_module
 import pytest
@@ -48,7 +49,10 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
 
     app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(app) as test_client:
-        yield test_client
+    fake_s3 = MagicMock()
+    fake_s3.head_bucket.return_value = {}
+    with patch("app.services.storage_service.boto3.client", return_value=fake_s3):
+        with TestClient(app) as test_client:
+            yield test_client
 
     app.dependency_overrides.clear()
