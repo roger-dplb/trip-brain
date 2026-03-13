@@ -98,7 +98,7 @@ Checklist do projeto com status atual da implementação.
 ### Qualidade, segurança e operação
 - [x] Testes unitários backend
 - [x] Testes de integração API + DB
-- [ ] Testes frontend (componentes e páginas)
+- [x] Testes frontend (componentes e páginas)
 - [x] Lint/format automatizado no CI
 - [ ] Autenticação/autorização dos usuários do casal
 - [ ] Observabilidade (logs estruturados, métricas básicas)
