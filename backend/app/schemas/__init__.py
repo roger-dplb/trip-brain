@@ -4,7 +4,7 @@ from app.schemas.error import ErrorBody, ErrorResponse
 from app.schemas.memory import MemoryCreate, MemoryRead, MemoryUpdate
 from app.schemas.rag import (
     ItineraryGenerationRequest,
-    ItineraryGenerationResponse,
+    ItineraryJobEnqueuedResponse,
     SemanticQueryMatch,
     SemanticQueryRequest,
     SemanticQueryResponse,
@@ -34,7 +34,7 @@ __all__ = [
     "MemoryRead",
     "MemoryUpdate",
     "ItineraryGenerationRequest",
-    "ItineraryGenerationResponse",
+    "ItineraryJobEnqueuedResponse",
     "SemanticQueryRequest",
     "SemanticQueryResponse",
     "SemanticQueryMatch",

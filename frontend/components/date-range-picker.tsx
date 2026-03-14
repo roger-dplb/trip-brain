@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -35,6 +35,15 @@ export function DateRangePicker({
   onEndDateChange,
 }: DateRangePickerProps) {
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const range: DateRange = {
     from: toDate(startDate),
@@ -68,13 +77,18 @@ export function DateRangePicker({
           <span>{label}</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent
+        className={cn("p-0", isMobile ? "w-[calc(100vw-2rem)]" : "w-auto")}
+        align={isMobile ? "center" : "start"}
+      >
         <Calendar
           mode="range"
           selected={range}
           onSelect={handleSelect}
           locale={ptBR}
-          numberOfMonths={2}
+          numberOfMonths={isMobile ? 1 : 2}
+          className={isMobile ? "[--cell-size:2.75rem]" : undefined}
+          classNames={isMobile ? { root: "w-full" } : undefined}
           initialFocus
         />
       </PopoverContent>

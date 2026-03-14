@@ -1,9 +1,11 @@
+import hashlib
 import json
 import logging
 import uuid
 
+from fastapi import HTTPException
 from openai import OpenAI
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -17,7 +19,7 @@ from app.repositories.embedding_repository import EmbeddingRepository
 from app.schemas.activity import ActivityCreate
 from app.schemas.day import DayCreate
 from app.schemas.rag import (
-    ItineraryGenerationResponse,
+    ItineraryJobEnqueuedResponse,
     SemanticQueryMatch,
     SemanticQueryResponse,
 )
@@ -75,121 +77,64 @@ class RagService:
             matches=matches,
         )
 
-    def generate_itinerary(
+    def enqueue_itinerary_generation(
         self,
         trip_id: uuid.UUID,
         preferences: str | None,
         max_days: int,
-    ) -> ItineraryGenerationResponse:
+    ) -> ItineraryJobEnqueuedResponse:
         trip = self.db.query(Trip).filter(Trip.id == trip_id).first()
         if not trip:
-            return ItineraryGenerationResponse(
-                itinerary_markdown="# Roteiro inicial\n\nViagem não encontrada.",
-                provider=settings.itinerary_provider,
-                model=settings.itinerary_model,
-                prompt_strategy=settings.itinerary_prompt_strategy,
-                used_summary=False,
-            )
+            raise HTTPException(status_code=404, detail="Viagem não encontrada")
 
-        days = (
-            self.db.query(Day)
-            .filter(Day.trip_id == trip_id)
-            .order_by(Day.day_number.asc())
-            .all()
+        trip.status = "generating_itinerary"
+        self.db.flush()
+
+        payload = {"preferences": preferences, "max_days": max_days}
+        payload_hash = hashlib.sha256(
+            json.dumps(payload, sort_keys=True).encode()
+        ).hexdigest()
+        job_id = uuid.uuid4()
+
+        result = self.db.execute(
+            text("""
+                INSERT INTO worker_jobs (
+                    id, job_type, source_type, source_id,
+                    status, payload, payload_hash, updated_at
+                )
+                VALUES (
+                    :job_id, 'itinerary_generation', 'trip', :trip_id,
+                    'pending', :payload::jsonb, :payload_hash, NOW()
+                )
+                ON CONFLICT (job_type, source_type, source_id) DO UPDATE
+                SET
+                    status = 'pending',
+                    attempt_count = 0,
+                    available_at = NOW(),
+                    payload = EXCLUDED.payload,
+                    payload_hash = EXCLUDED.payload_hash,
+                    last_error = NULL,
+                    updated_at = NOW()
+                RETURNING id
+            """),
+            {
+                "job_id": job_id,
+                "trip_id": trip_id,
+                "payload": json.dumps(payload),
+                "payload_hash": payload_hash,
+            },
         )
-        day_ids = [day.id for day in days]
+        returned = result.fetchone()
+        if returned:
+            job_id = returned[0]
 
-        activities_by_day: dict[uuid.UUID, list[Activity]] = {
-            day.id: [] for day in days
-        }
-        if day_ids:
-            activities = (
-                self.db.query(Activity)
-                .filter(Activity.day_id.in_(day_ids))
-                .order_by(Activity.created_at.asc())
-                .all()
-            )
-            for activity in activities:
-                activities_by_day.setdefault(activity.day_id, []).append(activity)
+        self.db.commit()
 
-        template_itinerary = self._build_itinerary_markdown(
-            trip=trip,
-            days=days,
-            activities_by_day=activities_by_day,
-            preferences=preferences,
-            max_days=max_days,
+        return ItineraryJobEnqueuedResponse(
+            trip_id=trip_id,
+            job_id=str(job_id),
+            trip_status="generating_itinerary",
         )
-
-        used_summary = bool((trip.summary or "").strip())
-
-        if settings.itinerary_provider.lower() != "openai":
-            return ItineraryGenerationResponse(
-                itinerary_markdown=template_itinerary,
-                provider="template",
-                model="template-fallback-v1",
-                prompt_strategy=settings.itinerary_prompt_strategy,
-                used_summary=used_summary,
-            )
-
-        if not settings.openai_api_key:
-            return ItineraryGenerationResponse(
-                itinerary_markdown=template_itinerary,
-                provider="template",
-                model="template-fallback-v1",
-                prompt_strategy=settings.itinerary_prompt_strategy,
-                used_summary=used_summary,
-            )
-
-        try:
-            logger.info(
-                "itinerary: calling openai model=%s trip_id=%s max_days=%d",
-                settings.itinerary_model,
-                trip_id,
-                max_days,
-            )
-            structured = self._generate_structured_itinerary_with_openai(
-                trip=trip,
-                days=days,
-                activities_by_day=activities_by_day,
-                preferences=preferences,
-                max_days=max_days,
-                template_itinerary=template_itinerary,
-            )
-            logger.info(
-                "itinerary: openai response received, days_in_response=%d",
-                len(structured.get("days", [])),
-            )
-
-            days_created, activities_created = self._persist_itinerary(
-                trip_id=trip_id,
-                structured_days=structured.get("days", []),
-            )
-            logger.info(
-                "itinerary: persisted days_created=%d activities_created=%d",
-                days_created,
-                activities_created,
-            )
-
-            return ItineraryGenerationResponse(
-                itinerary_markdown=structured.get("markdown", template_itinerary),
-                provider="openai",
-                model=settings.itinerary_model,
-                prompt_strategy=settings.itinerary_prompt_strategy,
-                used_summary=used_summary,
-                days_created=days_created,
-                activities_created=activities_created,
-            )
-        except Exception as exc:
-            logger.warning(
-                "itinerary: openai failed, using template fallback error=%s", exc
-            )
-            return ItineraryGenerationResponse(
-                itinerary_markdown=template_itinerary,
-                provider="template",
-                model="template-fallback-v1",
-                prompt_strategy=settings.itinerary_prompt_strategy,
-                used_summary=used_summary,
-            )
 
     def _generate_structured_itinerary_with_openai(
         self,

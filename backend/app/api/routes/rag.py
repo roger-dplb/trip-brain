@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.rag import (
     ItineraryGenerationRequest,
-    ItineraryGenerationResponse,
+    ItineraryJobEnqueuedResponse,
     SemanticQueryRequest,
     SemanticQueryResponse,
 )
@@ -29,12 +29,16 @@ def semantic_query(
     )
 
 
-@router.post("/itinerary", response_model=ItineraryGenerationResponse)
+@router.post(
+    "/itinerary",
+    response_model=ItineraryJobEnqueuedResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 def generate_itinerary(
     payload: ItineraryGenerationRequest,
     service: RagService = Depends(get_service),
 ):
-    return service.generate_itinerary(
+    return service.enqueue_itinerary_generation(
         trip_id=payload.trip_id,
         preferences=payload.preferences,
         max_days=payload.max_days,

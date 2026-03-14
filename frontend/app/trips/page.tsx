@@ -74,6 +74,24 @@ export default function TripsPage() {
     loadTrips();
   }, [router]);
 
+  useEffect(() => {
+    const hasGenerating = trips.some((t) => t.status === "generating_itinerary");
+    if (!hasGenerating) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const updated = await fetchTrips();
+        setTrips(updated);
+        const stillGenerating = updated.some((t) => t.status === "generating_itinerary");
+        if (!stillGenerating) clearInterval(interval);
+      } catch {
+        // silently ignore polling errors
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [trips]);
+
   async function handleDeleteTrip(id: string | number) {
     try {
       await deleteTrip(id);

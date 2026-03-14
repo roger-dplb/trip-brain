@@ -28,11 +28,7 @@ class ItineraryGenerationRequest(BaseModel):
     max_days: int = Field(default=7, ge=1, le=21)
 
 
-class ItineraryGenerationResponse(BaseModel):
-    itinerary_markdown: str
-    provider: str
-    model: str
-    prompt_strategy: str
-    used_summary: bool
-    days_created: int = 0
-    activities_created: int = 0
+class ItineraryJobEnqueuedResponse(BaseModel):
+    trip_id: uuid.UUID
+    job_id: str
+    trip_status: str

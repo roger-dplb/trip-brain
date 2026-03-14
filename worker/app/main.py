@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw, ImageOps
 
 JOB_TYPE_EMBEDDING = "embedding_generation"
 JOB_TYPE_THUMBNAIL = "thumbnail_generation"
+JOB_TYPE_ITINERARY = "itinerary_generation"
 
 
 def _ensure_production_secure_settings() -> None:
@@ -426,6 +427,252 @@ def _consume_pending_jobs(
     return processed
 
 
+def _build_itinerary_prompt_worker(
+    trip_name: str,
+    destinations: list[str],
+    start_date: object,
+    end_date: object,
+    summary: str | None,
+    day_rows: list[tuple],
+    activities_by_day: dict,
+    preferences: str | None,
+    max_days: int,
+) -> str:
+    preferences_text = (preferences or "").strip() or "Sem preferências explícitas"
+    summary_text = (summary or "").strip() or "Sem resumo informado"
+    dest_str = ", ".join(destinations) if destinations else "destino não informado"
+
+    day_lines: list[str] = []
+    for day_id, day_number, day_date, day_notes in day_rows[:max_days]:
+        line = f"Dia {day_number}"
+        if day_date:
+            line = f"{line} ({day_date})"
+        activities = activities_by_day.get(day_id, [])
+        if activities:
+            line = f"{line}: " + "; ".join(
+                act["title"] + (f" @ {act['location']}" if act.get("location") else "")
+                for act in activities[:6]
+            )
+        elif day_notes:
+            line = f"{line}: {day_notes}"
+        day_lines.append(line)
+
+    if not day_lines:
+        day_lines = ["Sem dias planejados ainda"]
+
+    return "\n".join(
+        [
+            "Você é um assistente de viagens para casal. Responda APENAS com um objeto JSON válido, sem texto adicional.",
+            "",
+            "O JSON deve seguir exatamente esta estrutura:",
+            "{",
+            '  "markdown": "<roteiro completo em Markdown com seções: visão geral, plano por dia, recomendações finais>",',
+            '  "days": [',
+            "    {",
+            '      "day_number": 1,',
+            '      "date": "YYYY-MM-DD ou null",',
+            '      "notes": "resumo do dia em 1-2 frases ou null",',
+            '      "activities": [',
+            '        {"title": "nome da atividade", "location": "local ou null", "notes": "dica ou null"}',
+            "      ]",
+            "    }",
+            "  ]",
+            "}",
+            "",
+            "Regras:",
+            f"- Gere entre 1 e {max_days} dias",
+            "- Cada dia deve ter entre 2 e 5 atividades",
+            "- Não invente atrações muito específicas se não houver contexto",
+            "- Use os dados da viagem abaixo como base",
+            "- Se já existem atividades planejadas, inclua-as e complemente",
+            "",
+            f"Viagem: {trip_name}",
+            f"Destinos: {dest_str}",
+            f"Período: {start_date} até {end_date}",
+            f"Resumo atual: {summary_text}",
+            f"Preferências: {preferences_text}",
+            "",
+            "Contexto dos dias/atividades já existentes:",
+            *[f"- {line}" for line in day_lines],
+        ]
+    )
+
+
+def _persist_itinerary_worker(
+    connection: psycopg.Connection,
+    trip_id: uuid.UUID,
+    structured_days: list[dict],
+) -> tuple[int, int]:
+    days_created = 0
+    activities_created = 0
+
+    for day_data in structured_days:
+        day_number = int(day_data.get("day_number") or 0)
+        if not day_number:
+            continue
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id FROM days WHERE trip_id = %s AND day_number = %s",
+                (trip_id, day_number),
+            )
+            existing_day = cursor.fetchone()
+
+        if existing_day:
+            day_id = existing_day[0]
+        else:
+            day_id = uuid.uuid4()
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO days (id, trip_id, day_number, date, notes, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
+                    """,
+                    (
+                        day_id,
+                        trip_id,
+                        day_number,
+                        day_data.get("date") or None,
+                        day_data.get("notes") or None,
+                    ),
+                )
+            days_created += 1
+
+        for act in day_data.get("activities", []):
+            title = (act.get("title") or "").strip()
+            if not title:
+                continue
+
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id FROM activities WHERE day_id = %s AND LOWER(title) = LOWER(%s)",
+                    (day_id, title),
+                )
+                existing_act = cursor.fetchone()
+
+            if existing_act:
+                continue
+
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO activities (id, day_id, title, location, notes, status, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, 'planned', NOW(), NOW())
+                    """,
+                    (
+                        uuid.uuid4(),
+                        day_id,
+                        title,
+                        act.get("location") or None,
+                        act.get("notes") or None,
+                    ),
+                )
+            activities_created += 1
+
+    return days_created, activities_created
+
+
+def _run_itinerary_generation(
+    connection: psycopg.Connection,
+    openai_client: OpenAI,
+    source_id: uuid.UUID,
+    payload: dict,
+) -> dict:
+    itinerary_model = os.getenv("ITINERARY_MODEL", "gpt-4o")
+    preferences = payload.get("preferences")
+    max_days = int(payload.get("max_days") or 7)
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, name, destinations, start_date, end_date, summary FROM trips WHERE id = %s",
+            (source_id,),
+        )
+        trip_row = cursor.fetchone()
+
+    if not trip_row:
+        raise RuntimeError(f"Trip {source_id} not found")
+
+    trip_id, trip_name, destinations, start_date, end_date, summary = trip_row
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, day_number, date, notes FROM days WHERE trip_id = %s ORDER BY day_number ASC",
+            (trip_id,),
+        )
+        day_rows = cursor.fetchall()
+
+    day_ids = [row[0] for row in day_rows]
+    activities_by_day: dict = {row[0]: [] for row in day_rows}
+
+    if day_ids:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, day_id, title, location, notes FROM activities WHERE day_id = ANY(%s) ORDER BY created_at ASC",
+                (day_ids,),
+            )
+            for act_id, day_id, title, location, notes in cursor.fetchall():
+                activities_by_day.setdefault(day_id, []).append(
+                    {"id": act_id, "title": title, "location": location, "notes": notes}
+                )
+
+    prompt = _build_itinerary_prompt_worker(
+        trip_name=trip_name,
+        destinations=list(destinations) if destinations else [],
+        start_date=start_date,
+        end_date=end_date,
+        summary=summary,
+        day_rows=day_rows,
+        activities_by_day=activities_by_day,
+        preferences=preferences,
+        max_days=max_days,
+    )
+
+    _log(
+        "itinerary_generation_started",
+        trip_id=trip_id,
+        max_days=max_days,
+        model=itinerary_model,
+    )
+
+    response = openai_client.responses.create(model=itinerary_model, input=prompt)
+    raw = (getattr(response, "output_text", "") or "").strip()
+
+    if not raw:
+        raise RuntimeError("Empty response from OpenAI for itinerary generation")
+
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+
+    structured = json.loads(raw)
+
+    days_created, activities_created = _persist_itinerary_worker(
+        connection=connection,
+        trip_id=trip_id,
+        structured_days=structured.get("days", []),
+    )
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE trips SET status = 'planned', updated_at = NOW() WHERE id = %s",
+            (trip_id,),
+        )
+
+    _log(
+        "itinerary_generation_done",
+        trip_id=trip_id,
+        days_created=days_created,
+        activities_created=activities_created,
+    )
+
+    return {
+        "type": JOB_TYPE_ITINERARY,
+        "days_created": days_created,
+        "activities_created": activities_created,
+    }
+
+
 def _dispatch_job(
     connection: psycopg.Connection,
     storage_client: object,
@@ -485,6 +732,14 @@ def _dispatch_job(
             "status": "done",
             "thumbnail_key": thumbnail_key,
         }
+
+    if job_type == JOB_TYPE_ITINERARY:
+        return _run_itinerary_generation(
+            connection=connection,
+            openai_client=openai_client,
+            source_id=source_id,
+            payload=payload,
+        )
 
     raise RuntimeError(f"Unsupported job_type: {job_type}")
 
@@ -624,6 +879,12 @@ def _handle_job_failure(
                 """,
                 (next_attempt, str(error)[:2000], job_id),
             )
+        if job_type == JOB_TYPE_ITINERARY:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE trips SET status = 'itinerary_failed', updated_at = NOW() WHERE id = %s",
+                    (source_id,),
+                )
         _log(
             "job_failed_terminal",
             job_id=job_id,

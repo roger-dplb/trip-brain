@@ -139,8 +139,8 @@ export default function NewTripPage() {
 
   async function handleCreateTrip(generateAiItinerary: boolean) {
     setError(null);
-    setLoadingStep(generateAiItinerary ? "Gerando roteiro com IA (pode demorar um pouco)..." : "Criando viagem...");
-    
+    setLoadingStep("Criando viagem...");
+
     try {
       const trip = await createTrip({
         name,
@@ -148,13 +148,12 @@ export default function NewTripPage() {
         start_date: startDate,
         end_date: endDate,
         summary,
-        status: "planned",
+        status: generateAiItinerary ? "generating_itinerary" : "planned",
       });
 
       if (generateAiItinerary) {
         const maxDays = tripDurationDays(startDate, endDate);
-        
-        // Assemble AI preferences context
+
         const compiledPreferences = [
           arrivalTime ? `Horário que chegaremos no destino (dia 1): ${arrivalTime}` : "",
           departureTime ? `Horário que iremos embora (último dia): ${departureTime}` : "",
@@ -163,16 +162,20 @@ export default function NewTripPage() {
           preferences ? `Observações extras: ${preferences.trim()}` : ""
         ].filter(Boolean).join(". ");
 
-        await generateItinerary({
-          trip_id: trip.id.toString(),
-          preferences: compiledPreferences || "Sem preferências específicas fornecidas.",
-          max_days: maxDays,
-        });
+        try {
+          await generateItinerary({
+            trip_id: trip.id.toString(),
+            preferences: compiledPreferences || "Sem preferências específicas fornecidas.",
+            max_days: maxDays,
+          });
+        } catch {
+          // enqueue failed — trip was created, proceed to /trips anyway
+        }
       }
 
-      router.push(`/trips/${trip.id}`);
+      router.push("/trips");
     } catch {
-      setError("Não foi possível concluir a ação. Tente novamente.");
+      setError("Não foi possível criar a viagem. Tente novamente.");
       setLoadingStep("");
     }
   }

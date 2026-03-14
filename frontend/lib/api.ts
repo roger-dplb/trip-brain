@@ -335,22 +335,18 @@ export function createUploadPresign(payload: {
   );
 }
 
-export type ItineraryResponse = {
-  itinerary_markdown: string;
-  provider: string;
-  model: string;
-  prompt_strategy: string;
-  used_summary: boolean;
-  days_created: number;
-  activities_created: number;
+export type ItineraryJobEnqueuedResponse = {
+  trip_id: string;
+  job_id: string;
+  trip_status: string;
 };
 
 export function generateItinerary(payload: {
   trip_id: string;
   preferences?: string;
   max_days?: number;
-}): Promise<ItineraryResponse> {
-  return request<ItineraryResponse>(
+}): Promise<ItineraryJobEnqueuedResponse> {
+  return request<ItineraryJobEnqueuedResponse>(
     "/rag/itinerary",
     {
       method: "POST",
