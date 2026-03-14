@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { createTrip, generateItinerary } from "@/lib/api";
 import { DateRangePicker } from "@/components/date-range-picker";
+import { DestinationInput } from "@/components/destination-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock } from "lucide-react";
 
@@ -88,7 +89,7 @@ export default function NewTripPage() {
   
   // Step 1: Trip info
   const [name, setName] = useState("");
-  const [destination, setDestination] = useState("");
+  const [destinations, setDestinations] = useState<string[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [summary, setSummary] = useState("");
@@ -128,6 +129,10 @@ export default function NewTripPage() {
       setError("Selecione o período da viagem.");
       return;
     }
+    if (destinations.length === 0) {
+      setError("Adicione pelo menos um destino.");
+      return;
+    }
     setError(null);
     setStep("ai");
   }
@@ -139,7 +144,7 @@ export default function NewTripPage() {
     try {
       const trip = await createTrip({
         name,
-        destination,
+        destinations,
         start_date: startDate,
         end_date: endDate,
         summary,
@@ -219,13 +224,11 @@ export default function NewTripPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#242424] mb-1.5">Destino</label>
-                <input
-                  className={inputClass}
-                  placeholder="Ex: Portugal e Espanha"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  required
+                <label className="block text-sm font-medium text-[#242424] mb-1.5">Destinos</label>
+                <DestinationInput
+                  destinations={destinations}
+                  onChange={setDestinations}
+                  error={destinations.length === 0 && error?.includes("destino") ? error : undefined}
                 />
               </div>
               <div>
@@ -277,7 +280,7 @@ export default function NewTripPage() {
                     Gostaria de gerar um roteiro com IA?
                   </h3>
                   <p className="text-sm text-[#8b8b8b]">
-                    Nossa IA pode sugerir atividades diárias personalizadas para a sua viagem de {startDate} até {endDate}.
+                    Nossa IA pode sugerir atividades diárias personalizadas para <strong>{destinations.join(" · ")}</strong> de {startDate} até {endDate}.
                   </p>
                 </div>
 
