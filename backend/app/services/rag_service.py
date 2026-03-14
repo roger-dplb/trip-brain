@@ -357,7 +357,7 @@ class RagService:
                 "- Se já existem atividades planejadas, inclua-as e complemente",
                 "",
                 f"Viagem: {trip.name}",
-                f"Destino: {trip.destination}",
+                f"Destinos: {', '.join(trip.destinations)}",
                 f"Período: {trip.start_date} até {trip.end_date}",
                 f"Resumo atual: {summary_text}",
                 f"Preferências: {preferences_text}",
@@ -463,7 +463,7 @@ class RagService:
         lines = [
             f"# Roteiro inicial · {trip.name}",
             "",
-            f"Destino: {trip.destination}",
+            f"Destinos: {', '.join(trip.destinations)}",
             f"Período: {trip.start_date} até {trip.end_date}",
             "",
         ]
