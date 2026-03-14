@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import shutil
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +9,7 @@ import psycopg
 from app.stories.captions import generate_day_caption
 from app.stories.compiler import compile_video, create_zip
 from app.stories.renderer import render_slide_png
-from app.stories.slides import NoPhotosError, build_slides_data
+from app.stories.slides import build_slides_data
 
 
 def process_stories_export(
@@ -138,11 +137,9 @@ def _fetch_trip(trip_id: str, database_url: str, minio_public_endpoint: str) -> 
 
             for day_id, day_number, date, notes in day_rows:
                 # Determine city from trip destinations
-                cur.execute(
-                    "SELECT destinations FROM trips WHERE id = %s", (trip_id,)
-                )
+                cur.execute("SELECT destinations FROM trips WHERE id = %s", (trip_id,))
                 dest_row = cur.fetchone()
-                city = (dest_row[0][0] if dest_row and dest_row[0] else "")
+                city = dest_row[0][0] if dest_row and dest_row[0] else ""
 
                 day = SimpleNamespace(
                     id=day_id,
@@ -205,7 +202,9 @@ def _fetch_trip(trip_id: str, database_url: str, minio_public_endpoint: str) -> 
     return trip
 
 
-def _upload_to_minio(storage_client: Any, bucket: str, file_path: Path, key: str) -> None:
+def _upload_to_minio(
+    storage_client: Any, bucket: str, file_path: Path, key: str
+) -> None:
     with open(file_path, "rb") as f:
         storage_client.put_object(
             Bucket=bucket,
@@ -236,7 +235,13 @@ def _update_story_job(
                         error_msg = %s
                     WHERE id = %s
                     """,
-                    (status, zip_object_key, mp4_object_key, error_msg, story_export_job_id),
+                    (
+                        status,
+                        zip_object_key,
+                        mp4_object_key,
+                        error_msg,
+                        story_export_job_id,
+                    ),
                 )
             conn.commit()
     except Exception:

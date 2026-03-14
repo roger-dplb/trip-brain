@@ -68,7 +68,9 @@ def trigger_stories_export(trip_id: uuid.UUID, db: Session = Depends(get_db)):
 
     trip = trip_repo.get(trip_id)
     if not trip:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found"
+        )
 
     # Check for cached valid export
     existing_job = export_repo.get_by_trip(trip_id)
@@ -120,11 +122,15 @@ def get_stories_export_status(
 
     trip = trip_repo.get(trip_id)
     if not trip:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found"
+        )
 
     job = export_repo.get_by_trip(trip_id)
     if not job or job.id != job_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Export job not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Export job not found"
+        )
 
     return StoryExportStatusResponse(
         job_id=job.id,

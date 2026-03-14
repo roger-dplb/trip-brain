@@ -1,12 +1,11 @@
 import uuid
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.main import app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -29,11 +28,12 @@ def _make_job(status="done", trip_id=None):
 
 def test_trigger_export_returns_202_for_new_job(client):
     trip_id = uuid.uuid4()
-    with patch("app.api.routes.stories.TripRepository") as MockTripRepo, \
-         patch("app.api.routes.stories.StoryExportRepository") as MockExportRepo, \
-         patch("app.api.routes.stories.MemoryRepository") as MockMemRepo, \
-         patch("app.api.routes.stories._enqueue_worker_job") as mock_enqueue:
-
+    with (
+        patch("app.api.routes.stories.TripRepository") as MockTripRepo,
+        patch("app.api.routes.stories.StoryExportRepository") as MockExportRepo,
+        patch("app.api.routes.stories.MemoryRepository") as MockMemRepo,
+        patch("app.api.routes.stories._enqueue_worker_job") as mock_enqueue,
+    ):
         MockTripRepo.return_value.get.return_value = SimpleNamespace(id=trip_id)
         MockExportRepo.return_value.get_by_trip.return_value = None
         MockMemRepo.return_value.list.return_value = [
@@ -52,10 +52,11 @@ def test_trigger_export_returns_202_for_new_job(client):
 
 def test_trigger_export_returns_422_when_trip_has_no_photos(client):
     trip_id = uuid.uuid4()
-    with patch("app.api.routes.stories.TripRepository") as MockTripRepo, \
-         patch("app.api.routes.stories.StoryExportRepository") as MockExportRepo, \
-         patch("app.api.routes.stories.MemoryRepository") as MockMemRepo:
-
+    with (
+        patch("app.api.routes.stories.TripRepository") as MockTripRepo,
+        patch("app.api.routes.stories.StoryExportRepository") as MockExportRepo,
+        patch("app.api.routes.stories.MemoryRepository") as MockMemRepo,
+    ):
         MockTripRepo.return_value.get.return_value = SimpleNamespace(id=trip_id)
         MockExportRepo.return_value.get_by_trip.return_value = None
         MockMemRepo.return_value.list.return_value = [
@@ -68,18 +69,21 @@ def test_trigger_export_returns_422_when_trip_has_no_photos(client):
 
 def test_trigger_export_returns_200_when_cache_is_valid(client):
     trip_id = uuid.uuid4()
-    with patch("app.api.routes.stories.TripRepository") as MockTripRepo, \
-         patch("app.api.routes.stories.StoryExportRepository") as MockExportRepo, \
-         patch("app.api.routes.stories.MemoryRepository") as MockMemRepo, \
-         patch("app.api.routes.stories.StorageService") as MockStorage:
-
+    with (
+        patch("app.api.routes.stories.TripRepository") as MockTripRepo,
+        patch("app.api.routes.stories.StoryExportRepository") as MockExportRepo,
+        patch("app.api.routes.stories.MemoryRepository") as MockMemRepo,
+        patch("app.api.routes.stories.StorageService") as MockStorage,
+    ):
         MockTripRepo.return_value.get.return_value = SimpleNamespace(id=trip_id)
         done_job = _make_job(status="done", trip_id=trip_id)
         MockExportRepo.return_value.get_by_trip.return_value = done_job
         old_change = datetime(2026, 1, 1, tzinfo=timezone.utc)
         MockExportRepo.return_value.get_last_data_change.return_value = old_change
         MockMemRepo.return_value.list.return_value = []
-        MockStorage.return_value.build_public_object_url.return_value = "http://minio/..."
+        MockStorage.return_value.build_public_object_url.return_value = (
+            "http://minio/..."
+        )
 
         resp = client.post(f"/api/v1/trips/{trip_id}/stories/export")
         assert resp.status_code == 200
@@ -91,9 +95,10 @@ def test_trigger_export_returns_200_when_cache_is_valid(client):
 def test_get_export_status_returns_404_for_wrong_trip(client):
     trip_id = uuid.uuid4()
     other_job_id = uuid.uuid4()
-    with patch("app.api.routes.stories.TripRepository") as MockTripRepo, \
-         patch("app.api.routes.stories.StoryExportRepository") as MockExportRepo:
-
+    with (
+        patch("app.api.routes.stories.TripRepository") as MockTripRepo,
+        patch("app.api.routes.stories.StoryExportRepository") as MockExportRepo,
+    ):
         MockTripRepo.return_value.get.return_value = SimpleNamespace(id=trip_id)
         wrong_job = _make_job(status="done")  # different trip_id
         MockExportRepo.return_value.get_by_trip.return_value = wrong_job

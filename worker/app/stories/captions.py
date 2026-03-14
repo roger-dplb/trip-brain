@@ -21,10 +21,14 @@ def generate_day_caption(
     Returns:
         A single sentence in Portuguese, max ~120 characters.
     """
-    activities_text = ", ".join(
-        act.title for act in getattr(day, "activities", [])
-        if getattr(act, "status", "") != "skipped"
-    ) or "nenhuma atividade registrada"
+    activities_text = (
+        ", ".join(
+            act.title
+            for act in getattr(day, "activities", [])
+            if getattr(act, "status", "") != "skipped"
+        )
+        or "nenhuma atividade registrada"
+    )
 
     notes = getattr(day, "notes", None) or ""
 

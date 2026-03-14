@@ -5,7 +5,9 @@ import zipfile
 from pathlib import Path
 
 
-def compile_video(png_paths: list[Path], output_path: Path, hold_seconds: int = 5) -> None:
+def compile_video(
+    png_paths: list[Path], output_path: Path, hold_seconds: int = 5
+) -> None:
     """
     Compile a list of PNG slides into an MP4 video.
 
@@ -32,15 +34,24 @@ def compile_video(png_paths: list[Path], output_path: Path, hold_seconds: int = 
 
     result = subprocess.run(
         [
-            "ffmpeg", "-y",
-            "-f", "concat", "-safe", "0",
-            "-i", str(concat_file),
-            "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease,"
-                   "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,"
-                   "fps=30",
-            "-c:v", "libx264",
-            "-pix_fmt", "yuv420p",
-            "-crf", "23",
+            "ffmpeg",
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(concat_file),
+            "-vf",
+            "scale=1080:1920:force_original_aspect_ratio=decrease,"
+            "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,"
+            "fps=30",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-crf",
+            "23",
             "-an",
             str(output_path),
         ],

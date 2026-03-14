@@ -2,8 +2,6 @@ import uuid
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-import pytest
-
 
 class FakeStoryExportRepository:
     """Fake repository for unit-testing cache logic in isolation."""
@@ -18,9 +16,13 @@ class FakeStoryExportRepository:
     def upsert_queued(self, trip_id):
         self.upserted = trip_id
         return SimpleNamespace(
-            id=uuid.uuid4(), trip_id=trip_id, status="queued",
-            zip_object_key=None, mp4_object_key=None,
-            error_msg=None, created_at=datetime.now(timezone.utc)
+            id=uuid.uuid4(),
+            trip_id=trip_id,
+            status="queued",
+            zip_object_key=None,
+            mp4_object_key=None,
+            error_msg=None,
+            created_at=datetime.now(timezone.utc),
         )
 
     def get_last_data_change(self, trip_id):
@@ -29,10 +31,13 @@ class FakeStoryExportRepository:
 
 def _make_done_job(trip_id, created_at):
     return SimpleNamespace(
-        id=uuid.uuid4(), trip_id=trip_id, status="done",
+        id=uuid.uuid4(),
+        trip_id=trip_id,
+        status="done",
         zip_object_key=f"stories/{trip_id}/export.zip",
         mp4_object_key=f"stories/{trip_id}/export.mp4",
-        error_msg=None, created_at=created_at,
+        error_msg=None,
+        created_at=created_at,
     )
 
 
@@ -52,7 +57,9 @@ def test_cache_hit_when_no_data_change():
 
     job = repo.get_by_trip(trip_id)
     last_change = repo.get_last_data_change(trip_id)
-    is_cached = job is not None and job.status == "done" and last_change <= job.created_at
+    is_cached = (
+        job is not None and job.status == "done" and last_change <= job.created_at
+    )
 
     assert is_cached is True
 
@@ -72,7 +79,9 @@ def test_cache_miss_when_data_changed_after_export():
     repo = RepoWithNewChange(existing_job=existing)
     job = repo.get_by_trip(trip_id)
     last_change = repo.get_last_data_change(trip_id)
-    is_cached = job is not None and job.status == "done" and last_change <= job.created_at
+    is_cached = (
+        job is not None and job.status == "done" and last_change <= job.created_at
+    )
 
     assert is_cached is False
 

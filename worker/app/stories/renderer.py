@@ -49,7 +49,7 @@ def render_slide_png(slide: SlideData, output_path: Path) -> None:
                 "--no-sandbox",
                 "--disable-gpu",
                 "--disable-dev-shm-usage",
-                f"--window-size=1080,1920",
+                "--window-size=1080,1920",
                 f"--screenshot={output_path}",
                 f"file://{tmp_html}",
             ],

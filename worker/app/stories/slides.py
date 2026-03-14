@@ -72,10 +72,7 @@ def build_slides_data(trip: Any) -> list[SlideData]:
 
         # Count totals for the cover slide
         day_photos: list[Any] = [
-            m
-            for act in activities
-            for m in act.memories
-            if m.memory_type == "photo"
+            m for act in activities for m in act.memories if m.memory_type == "photo"
         ] + [m for m in day_memories if m.memory_type == "photo"]
 
         total_activities = len(activities)
@@ -112,10 +109,7 @@ def build_slides_data(trip: Any) -> list[SlideData]:
                             for m in photos
                             if getattr(m, "public_url", None)
                         ],
-                        photo_captions=[
-                            m.caption or ""
-                            for m in photos
-                        ],
+                        photo_captions=[m.caption or "" for m in photos],
                     )
                 )
             else:

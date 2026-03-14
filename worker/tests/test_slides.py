@@ -1,13 +1,16 @@
 """
 Unit tests for build_slides_data() from worker.app.stories.slides.
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 
 from types import SimpleNamespace
-from stories.slides import build_slides_data, SlideType, NoPhotosError
+
 import pytest
+from stories.slides import NoPhotosError, SlideType, build_slides_data
 
 
 def _make_photo_memory(activity_id=None, day_id=None):
@@ -32,7 +35,9 @@ def _make_note_memory(activity_id=None):
     )
 
 
-def _make_activity(activity_id, title="Visit", location="Kyoto", scheduled_time="09:00", memories=None):
+def _make_activity(
+    activity_id, title="Visit", location="Kyoto", scheduled_time="09:00", memories=None
+):
     return SimpleNamespace(
         id=activity_id,
         title=title,
@@ -43,7 +48,9 @@ def _make_activity(activity_id, title="Visit", location="Kyoto", scheduled_time=
     )
 
 
-def _make_day(day_number=1, city="Kyoto", date="2027-03-10", activities=None, memories=None):
+def _make_day(
+    day_number=1, city="Kyoto", date="2027-03-10", activities=None, memories=None
+):
     return SimpleNamespace(
         day_number=day_number,
         date=date,
@@ -76,12 +83,13 @@ def test_day_with_no_activities_generates_only_cover():
     trip = _make_trip([day_no_acts, day_with_photo])
 
     slides = build_slides_data(trip)
-    cover_slides = [s for s in slides if s.slide_type == SlideType.COVER and s.day_number == 1]
+    cover_slides = [
+        s for s in slides if s.slide_type == SlideType.COVER and s.day_number == 1
+    ]
     assert len(cover_slides) == 1
 
     activity_slides_day1 = [
-        s for s in slides
-        if s.slide_type == SlideType.ACTIVITY and s.day_number == 1
+        s for s in slides if s.slide_type == SlideType.ACTIVITY and s.day_number == 1
     ]
     assert len(activity_slides_day1) == 0
 
@@ -100,7 +108,9 @@ def test_activity_with_photo_generates_activity_slide():
 
 def test_activities_without_photos_generate_summary_slide():
     """Activities without photos should appear in a SUMMARY slide."""
-    act_photo = _make_activity("a1", title="Fushimi", memories=[_make_photo_memory("a1")])
+    act_photo = _make_activity(
+        "a1", title="Fushimi", memories=[_make_photo_memory("a1")]
+    )
     act_no_photo = _make_activity("a2", title="Check-in", memories=[])
     day = _make_day(activities=[act_photo, act_no_photo])
     trip = _make_trip([day])
@@ -121,14 +131,12 @@ def test_day_with_only_photoless_activities_has_no_activity_slides():
 
     slides = build_slides_data(trip)
     activity_slides_day1 = [
-        s for s in slides
-        if s.slide_type == SlideType.ACTIVITY and s.day_number == 1
+        s for s in slides if s.slide_type == SlideType.ACTIVITY and s.day_number == 1
     ]
     assert len(activity_slides_day1) == 0
 
     summary_slides_day1 = [
-        s for s in slides
-        if s.slide_type == SlideType.SUMMARY and s.day_number == 1
+        s for s in slides if s.slide_type == SlideType.SUMMARY and s.day_number == 1
     ]
     assert len(summary_slides_day1) == 1
 
