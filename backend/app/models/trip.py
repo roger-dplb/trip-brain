@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import Date, DateTime, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -15,7 +15,9 @@ class Trip(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    destination: Mapped[str] = mapped_column(String(120), nullable=False)
+    destinations: Mapped[list[str]] = mapped_column(
+        ARRAY(String(120)), nullable=False, server_default="{}"
+    )
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
