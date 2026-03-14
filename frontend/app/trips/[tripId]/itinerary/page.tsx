@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Trip, fetchTrip, generateItinerary } from "@/lib/api";
+import { formatDate } from "@/lib/utils";
 
 function tripDurationDays(trip: Trip): number {
   if (!trip.start_date || !trip.end_date) return 7;
@@ -103,7 +104,7 @@ export default function ItineraryPage({ params }: PageProps) {
                   Número de dias
                   {trip?.start_date && trip?.end_date && (
                     <span className="text-[#8b8b8b] font-normal ml-1">
-                      ({trip.start_date} → {trip.end_date})
+                      ({formatDate(trip.start_date)} → {formatDate(trip.end_date)})
                     </span>
                   )}
                 </label>

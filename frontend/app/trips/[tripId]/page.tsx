@@ -118,7 +118,7 @@ function getDaysBetween(start?: string | null, end?: string | null): number | nu
   const diff = Math.round(
     (new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60 * 60 * 24),
   );
-  return diff > 0 ? diff : null;
+  return diff >= 0 ? diff + 1 : null;
 }
 
 function cn(...classes: (string | boolean | undefined | null)[]) {
@@ -377,7 +377,7 @@ export default function TripDetailsPage({ params }: PageProps) {
             <div className="flex items-center gap-2 text-white/90">
               <CalendarIcon size={18} />
               <span className="text-sm sm:text-base font-medium">
-                {[trip.start_date, trip.end_date].filter(Boolean).join(" → ")}
+                {[trip.start_date, trip.end_date].filter(Boolean).map((d) => formatDate(d as string)).join(" → ")}
               </span>
             </div>
           )}
