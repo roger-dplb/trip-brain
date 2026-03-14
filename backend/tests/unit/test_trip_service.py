@@ -26,7 +26,7 @@ def test_create_rejects_invalid_date_range() -> None:
     service = TripService(repository=FakeTripRepository())
     payload = TripCreate(
         name="Kyoto",
-        destination="Japan",
+        destinations=["Kyoto, Japan"],
         start_date=date(2026, 4, 10),
         end_date=date(2026, 4, 8),
     )
@@ -43,7 +43,7 @@ def test_create_accepts_valid_date_range() -> None:
     service = TripService(repository=repository)
     payload = TripCreate(
         name="Kyoto",
-        destination="Japan",
+        destinations=["Kyoto, Japan"],
         start_date=date(2026, 4, 8),
         end_date=date(2026, 4, 10),
     )
@@ -52,6 +52,16 @@ def test_create_accepts_valid_date_range() -> None:
 
     assert result == payload
     assert repository.created_payload == payload
+
+
+def test_create_rejects_empty_destinations() -> None:
+    with pytest.raises(Exception):
+        TripCreate(
+            name="No destination",
+            destinations=[],
+            start_date=date(2026, 4, 8),
+            end_date=date(2026, 4, 10),
+        )
 
 
 def test_update_rejects_invalid_effective_date_range() -> None:

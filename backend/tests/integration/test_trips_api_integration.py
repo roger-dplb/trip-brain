@@ -6,7 +6,7 @@ def test_create_and_get_trip_integration(client) -> None:
         "/api/v1/trips/",
         json={
             "name": "Kyoto Trip",
-            "destination": "Kyoto",
+            "destinations": ["Kyoto, Japan"],
             "start_date": "2026-05-10",
             "end_date": "2026-05-20",
             "summary": "Primeira viagem",
@@ -17,7 +17,7 @@ def test_create_and_get_trip_integration(client) -> None:
     assert create_response.status_code == 201
     created = create_response.json()
     assert created["name"] == "Kyoto Trip"
-    assert created["destination"] == "Kyoto"
+    assert created["destinations"] == ["Kyoto, Japan"]
 
     trip_id = created["id"]
 
@@ -33,7 +33,7 @@ def test_create_trip_invalid_dates_returns_standardized_error(client) -> None:
         "/api/v1/trips/",
         json={
             "name": "Invalid Trip",
-            "destination": "Tokyo",
+            "destinations": ["Tokyo, Japan"],
             "start_date": "2026-06-10",
             "end_date": "2026-06-01",
             "status": "planning",
@@ -51,7 +51,7 @@ def test_trip_timeline_returns_empty_days_for_new_trip(client) -> None:
         "/api/v1/trips/",
         json={
             "name": "Timeline Trip",
-            "destination": "Osaka",
+            "destinations": ["Osaka, Japan"],
             "start_date": str(date(2026, 7, 1)),
             "end_date": str(date(2026, 7, 5)),
             "status": "planning",
