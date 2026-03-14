@@ -16,7 +16,7 @@ import {
   updateActivity,
   updateDay,
 } from "@/lib/api";
-import { getDayLabel } from "@/lib/utils";
+import { getDayLabel, formatDate } from "@/lib/utils";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -125,6 +125,35 @@ function cn(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+function getTripDateRange(startDate: string, endDate: string): string[] {
+  const dates: string[] = [];
+  const [sy, sm, sd] = startDate.split("-").map(Number);
+  const [ey, em, ed] = endDate.split("-").map(Number);
+  const start = new Date(Date.UTC(sy, sm - 1, sd));
+  const end = new Date(Date.UTC(ey, em - 1, ed));
+  const current = new Date(start);
+  while (current <= end) {
+    dates.push(current.toISOString().split("T")[0]);
+    current.setUTCDate(current.getUTCDate() + 1);
+  }
+  return dates;
+}
+
+function getCoveredDates(days: Day[], tripStartDate?: string | null): Set<string> {
+  const covered = new Set<string>();
+  for (const day of days) {
+    if (day.date) {
+      covered.add(day.date);
+    } else if (tripStartDate) {
+      const [y, m, d] = tripStartDate.split("-").map(Number);
+      const date = new Date(Date.UTC(y, m - 1, d));
+      date.setUTCDate(date.getUTCDate() + (day.day_number - 1));
+      covered.add(date.toISOString().split("T")[0]);
+    }
+  }
+  return covered;
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 type PageProps = {
@@ -146,6 +175,9 @@ export default function TripDetailsPage({ params }: PageProps) {
   const [showAddDay, setShowAddDay] = useState(false);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [addDayMode, setAddDayMode] = useState<"simple" | "select-date" | "extend">("simple");
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [selectedAvailableDate, setSelectedAvailableDate] = useState("");
 
   const orderedDays = useMemo(
     () => [...days].sort((a, b) => a.day_number - b.day_number),
@@ -175,12 +207,71 @@ export default function TripDetailsPage({ params }: PageProps) {
     loadTripData();
   }, [params.tripId]);
 
+  function handleAddDayClick() {
+    if (!trip?.start_date || !trip?.end_date) {
+      setAddDayMode("simple");
+      setShowAddDay((v) => !v);
+      return;
+    }
+    const range = getTripDateRange(trip.start_date, trip.end_date);
+    const covered = getCoveredDates(orderedDays, trip.start_date);
+    const missing = range.filter((d) => !covered.has(d));
+    if (missing.length === 0) {
+      setAddDayMode("extend");
+    } else {
+      setAddDayMode("select-date");
+      setAvailableDates(missing);
+      setSelectedAvailableDate(missing[0]);
+    }
+    setShowAddDay((v) => !v);
+  }
+
+  async function onCreateDayExtend(direction: "before" | "after") {
+    if (!trip?.start_date || !trip?.end_date) return;
+    try {
+      if (direction === "before") {
+        await Promise.all(orderedDays.map((d) => updateDay(d.id, { day_number: d.day_number + 1 })));
+        const [y, m, dd] = trip.start_date.split("-").map(Number);
+        const newDate = new Date(Date.UTC(y, m - 1, dd));
+        newDate.setUTCDate(newDate.getUTCDate() - 1);
+        await createDay({
+          trip_id: params.tripId,
+          day_number: 1,
+          date: newDate.toISOString().split("T")[0],
+        });
+      } else {
+        const covered = getCoveredDates(orderedDays, trip.start_date);
+        const sorted = Array.from(covered).sort();
+        const lastDate = sorted[sorted.length - 1];
+        const [y, m, dd] = lastDate.split("-").map(Number);
+        const newDate = new Date(Date.UTC(y, m - 1, dd));
+        newDate.setUTCDate(newDate.getUTCDate() + 1);
+        const maxDayNum = Math.max(...orderedDays.map((d) => d.day_number));
+        await createDay({
+          trip_id: params.tripId,
+          day_number: maxDayNum + 1,
+          date: newDate.toISOString().split("T")[0],
+        });
+      }
+      setShowAddDay(false);
+      await loadTripData();
+    } catch {
+      setError("Não foi possível criar o dia.");
+    }
+  }
+
   async function onCreateDay(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      await createDay({ trip_id: params.tripId, day_number: dayNumber, date: dayDate || undefined });
-      setDayDate("");
-      setDayNumber((v) => v + 1);
+      if (addDayMode === "select-date" && trip?.start_date && trip?.end_date) {
+        const range = getTripDateRange(trip.start_date, trip.end_date);
+        const pos = range.indexOf(selectedAvailableDate);
+        await createDay({ trip_id: params.tripId, day_number: pos + 1, date: selectedAvailableDate });
+      } else {
+        await createDay({ trip_id: params.tripId, day_number: dayNumber, date: dayDate || undefined });
+        setDayDate("");
+        setDayNumber((v) => v + 1);
+      }
       setShowAddDay(false);
       await loadTripData();
     } catch {
@@ -357,7 +448,7 @@ export default function TripDetailsPage({ params }: PageProps) {
               </p>
             </div>
             <button
-              onClick={() => setShowAddDay(!showAddDay)}
+              onClick={handleAddDayClick}
               className="inline-flex items-center justify-center gap-2 bg-[#ff6b6b] text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
             >
               <PlusIcon />
@@ -368,30 +459,98 @@ export default function TripDetailsPage({ params }: PageProps) {
           {/* Add day form */}
           {showAddDay && (
             <div className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-6 mb-6">
-              <h3 className="text-base font-semibold text-[#242424] mb-4">Novo dia</h3>
-              <form className="grid gap-3 sm:grid-cols-3" onSubmit={onCreateDay}>
-                <input
-                  className={inputClass}
-                  min={1}
-                  placeholder="Número do dia"
-                  type="number"
-                  value={dayNumber}
-                  onChange={(e) => setDayNumber(Number(e.target.value))}
-                  required
-                />
-                <input
-                  className={inputClass}
-                  type="date"
-                  value={dayDate}
-                  onChange={(e) => setDayDate(e.target.value)}
-                />
-                <button
-                  className="rounded-lg bg-[#ff6b6b] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
-                  type="submit"
-                >
-                  Criar dia
-                </button>
-              </form>
+              {/* Mode: simple — no trip dates set */}
+              {addDayMode === "simple" && (
+                <>
+                  <h3 className="text-base font-semibold text-[#242424] mb-4">Novo dia</h3>
+                  <form className="grid gap-3 sm:grid-cols-3" onSubmit={onCreateDay}>
+                    <input
+                      className={inputClass}
+                      min={1}
+                      placeholder="Número do dia"
+                      type="number"
+                      value={dayNumber}
+                      onChange={(e) => setDayNumber(Number(e.target.value))}
+                      required
+                    />
+                    <input
+                      className={inputClass}
+                      type="date"
+                      value={dayDate}
+                      onChange={(e) => setDayDate(e.target.value)}
+                    />
+                    <button
+                      className="rounded-lg bg-[#ff6b6b] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                      type="submit"
+                    >
+                      Criar dia
+                    </button>
+                  </form>
+                </>
+              )}
+
+              {/* Mode: select-date — there are gaps in the trip range */}
+              {addDayMode === "select-date" && (
+                <>
+                  <h3 className="text-base font-semibold text-[#242424] mb-1">Adicionar dia ao roteiro</h3>
+                  <p className="text-sm text-[#8b8b8b] mb-4">
+                    Selecione uma das datas disponíveis dentro do período da viagem.
+                  </p>
+                  <form className="flex flex-col sm:flex-row gap-3" onSubmit={onCreateDay}>
+                    <select
+                      className={cn(inputClass, "flex-1")}
+                      value={selectedAvailableDate}
+                      onChange={(e) => setSelectedAvailableDate(e.target.value)}
+                    >
+                      {availableDates.map((date) => (
+                        <option key={date} value={date}>
+                          {formatDate(date)}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="rounded-lg bg-[#ff6b6b] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity shrink-0"
+                      type="submit"
+                    >
+                      Adicionar dia
+                    </button>
+                  </form>
+                </>
+              )}
+
+              {/* Mode: extend — all days in the range are planned */}
+              {addDayMode === "extend" && (
+                <>
+                  <h3 className="text-base font-semibold text-[#242424] mb-1">Todos os dias já planejados</h3>
+                  <p className="text-sm text-[#8b8b8b] mb-4">
+                    Deseja estender a viagem?
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      className="flex-1 rounded-lg border-2 border-[#ff6b6b] px-4 py-3 text-sm font-medium text-[#ff6b6b] hover:bg-[#fff0f0] transition-colors text-left"
+                      type="button"
+                      onClick={() => onCreateDayExtend("before")}
+                    >
+                      <span className="block font-semibold">← Antes do início</span>
+                      <span className="text-xs text-[#8b8b8b]">
+                        Adiciona um dia antes de{" "}
+                        {trip?.start_date ? formatDate(trip.start_date) : "—"}
+                      </span>
+                    </button>
+                    <button
+                      className="flex-1 rounded-lg border-2 border-[#ff6b6b] px-4 py-3 text-sm font-medium text-[#ff6b6b] hover:bg-[#fff0f0] transition-colors text-left"
+                      type="button"
+                      onClick={() => onCreateDayExtend("after")}
+                    >
+                      <span className="block font-semibold">Após o final →</span>
+                      <span className="text-xs text-[#8b8b8b]">
+                        Adiciona um dia depois de{" "}
+                        {trip?.end_date ? formatDate(trip.end_date) : "—"}
+                      </span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
