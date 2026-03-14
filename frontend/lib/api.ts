@@ -306,6 +306,16 @@ export function deleteDay(dayId: string): Promise<void> {
   );
 }
 
+export function deleteTrip(tripId: string | number): Promise<void> {
+  return request<void>(
+    `/trips/${tripId}`,
+    {
+      method: "DELETE",
+    },
+    API_BASE_PUBLIC,
+  );
+}
+
 export function createUploadPresign(payload: {
   trip_id: string;
   day_id?: string;

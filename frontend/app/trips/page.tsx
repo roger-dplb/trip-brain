@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { TripCard } from "@/components/trip-card";
@@ -10,6 +11,7 @@ import {
   ApiError,
   Trip,
   clearStoredAccessToken,
+  deleteTrip,
   fetchTrips,
   getStoredAccessToken,
 } from "@/lib/api";
@@ -71,6 +73,16 @@ export default function TripsPage() {
 
     loadTrips();
   }, [router]);
+
+  async function handleDeleteTrip(id: string | number) {
+    try {
+      await deleteTrip(id);
+      setTrips((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Viagem excluída com sucesso.");
+    } catch {
+      toast.error("Não foi possível excluir a viagem.");
+    }
+  }
 
   function onLogout() {
     clearStoredAccessToken();
@@ -136,7 +148,7 @@ export default function TripsPage() {
         ) : (
           <div className="grid gap-4">
             {trips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
+              <TripCard key={trip.id} trip={trip} onDelete={handleDeleteTrip} />
             ))}
           </div>
         )}

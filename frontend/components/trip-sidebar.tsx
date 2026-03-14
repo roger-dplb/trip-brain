@@ -135,7 +135,6 @@ export function TripSidebar({ trip, tripId, isOpen = false, onClose }: Props) {
 
   const navItems = [
     { href: `/trips/${tripId}`, label: "Visão Geral", icon: <MapPin /> },
-    { href: `/trips/${tripId}/itinerary`, label: "Roteiro IA", icon: <Sparkle /> },
     { href: `/trips/${tripId}/timeline`, label: "Timeline", icon: <BarChart /> },
     { href: `/trips/${tripId}/memories`, label: "Memórias", icon: <Camera /> },
   ];
