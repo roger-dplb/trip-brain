@@ -31,6 +31,8 @@ export function DestinationInput({ destinations, onChange, error }: DestinationI
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -48,27 +50,35 @@ export function DestinationInput({ destinations, onChange, error }: DestinationI
     if (query.length < 2) {
       setSuggestions([]);
       setOpen(false);
+      setFetchError(false);
       return;
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      setFetchError(false);
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
+        const timeout = setTimeout(() => controller.abort(), 5000);
         const res = await fetch(
-          `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=pt`,
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`,
           { signal: controller.signal }
         );
         clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const results: string[] = (data.features ?? [])
           .map(formatSuggestion)
           .filter((s: string) => s.length > 0);
         setSuggestions(results);
-        setOpen(results.length > 0);
-      } catch {
+        setOpen(true);
+      } catch (err) {
+        console.error("[DestinationInput] Erro ao buscar sugestões:", err);
         setSuggestions([]);
-        setOpen(false);
+        setOpen(true);
+        setFetchError(true);
+      } finally {
+        setLoading(false);
       }
     }, 300);
   }, [query]);
@@ -142,8 +152,21 @@ export function DestinationInput({ destinations, onChange, error }: DestinationI
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Buscar cidade ou país..."
-          className="w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white pl-8 pr-3 py-2.5 text-sm text-[#242424] placeholder-[#8b8b8b] focus:border-[#ff6b6b] focus:outline-none focus:ring-1 focus:ring-[#ff6b6b] transition-colors"
+          className="w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white pl-8 pr-8 py-2.5 text-sm text-[#242424] placeholder-[#8b8b8b] focus:border-[#ff6b6b] focus:outline-none focus:ring-1 focus:ring-[#ff6b6b] transition-colors"
         />
+        {loading && (
+          <svg
+            className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-[#8b8b8b]"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+          </svg>
+        )}
       </div>
 
       {/* Inline error */}
@@ -152,19 +175,27 @@ export function DestinationInput({ destinations, onChange, error }: DestinationI
       )}
 
       {/* Dropdown */}
-      {open && suggestions.length > 0 && (
+      {open && (
         <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[rgba(0,0,0,0.08)] rounded-xl shadow-lg overflow-hidden">
-          {suggestions.map((s, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => addDestination(s)}
-              className="w-full text-left px-4 py-2.5 text-sm text-[#242424] hover:bg-[#fff9f6] flex items-center gap-2 transition-colors"
-            >
-              <MapPinIcon size={13} className="text-[#ff6b6b] shrink-0" />
-              {s}
-            </button>
-          ))}
+          {fetchError ? (
+            <p className="px-4 py-3 text-sm text-[#8b8b8b]">
+              Não foi possível buscar sugestões. Verifique sua conexão ou digite o destino manualmente.
+            </p>
+          ) : suggestions.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-[#8b8b8b]">Nenhum resultado encontrado.</p>
+          ) : (
+            suggestions.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => addDestination(s)}
+                className="w-full text-left px-4 py-2.5 text-sm text-[#242424] hover:bg-[#fff9f6] flex items-center gap-2 transition-colors"
+              >
+                <MapPinIcon size={13} className="text-[#ff6b6b] shrink-0" />
+                {s}
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>

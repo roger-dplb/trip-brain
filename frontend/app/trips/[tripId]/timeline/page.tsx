@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { Trip, Timeline, fetchTrip, fetchTripTimeline, createUploadPresign, completeUpload } from "@/lib/api";
+import { formatDate, getDayLabel } from "@/lib/utils";
 
 type PageProps = {
   params: { tripId: string };
@@ -165,7 +166,7 @@ export default function TripTimelinePage({ params }: PageProps) {
         <h1 className="text-2xl sm:text-3xl font-bold text-[#242424]">Timeline</h1>
         {(trip.start_date || trip.end_date) && (
           <p className="text-sm text-[#8b8b8b] mt-1">
-            {[trip.start_date, trip.end_date].filter(Boolean).join(" → ")}
+            {[trip.start_date ? formatDate(trip.start_date) : null, trip.end_date ? formatDate(trip.end_date) : null].filter(Boolean).join(" → ")}
           </p>
         )}
       </div>
@@ -188,9 +189,8 @@ export default function TripTimelinePage({ params }: PageProps) {
                     <div className="w-9 h-9 bg-[#ff6b6b] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
                       {day.day_number}
                     </div>
-                    <h2 className="font-semibold text-[#242424] text-lg">Dia {day.day_number}</h2>
+                    <h2 className="font-semibold text-[#242424] text-lg">{getDayLabel(day.day_number, trip?.start_date, day.date)}</h2>
                   </div>
-                  {day.date && <span className="text-sm text-[#8b8b8b]">{day.date}</span>}
                 </div>
 
                 <div className="p-4 sm:p-6 grid sm:grid-cols-2 gap-6">

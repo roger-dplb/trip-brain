@@ -4,13 +4,24 @@ import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import {
   Activity,
+  Trip,
   completeUpload,
   createUploadPresign,
   fetchActivitiesByDay,
   fetchDaysByTrip,
   fetchMemoriesByTrip,
+  fetchTrip,
 } from "@/lib/api";
+import { getDayLabel } from "@/lib/utils";
 
 type PageProps = {
   params: {
@@ -22,6 +33,7 @@ const inputClass =
   "w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2.5 text-sm text-[#242424] placeholder-[#8b8b8b] focus:border-[#ff6b6b] focus:outline-none focus:ring-1 focus:ring-[#ff6b6b] transition-colors";
 
 export default function TripMemoriesPage({ params }: PageProps) {
+  const [trip, setTrip] = useState<Trip | null>(null);
   const [memories, setMemories] = useState<
     Array<{
       id: string;
@@ -34,7 +46,7 @@ export default function TripMemoriesPage({ params }: PageProps) {
       activity_id?: string | null;
     }>
   >([]);
-  const [days, setDays] = useState<Array<{ id: string; day_number: number }>>([]);
+  const [days, setDays] = useState<Array<{ id: string; day_number: number; date?: string | null }>>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedDayId, setSelectedDayId] = useState("");
   const [selectedActivityId, setSelectedActivityId] = useState("");
@@ -46,12 +58,14 @@ export default function TripMemoriesPage({ params }: PageProps) {
   const [lightbox, setLightbox] = useState<{ url: string; caption?: string | null } | null>(null);
 
   const loadData = useCallback(async () => {
-    const [tripMemories, tripDays] = await Promise.all([
+    const [tripMemories, tripDays, tripData] = await Promise.all([
       fetchMemoriesByTrip(params.tripId),
       fetchDaysByTrip(params.tripId),
+      fetchTrip(params.tripId),
     ]);
     setMemories(tripMemories);
-    setDays(tripDays.map((day) => ({ id: day.id, day_number: day.day_number })));
+    setDays(tripDays.map((day) => ({ id: day.id, day_number: day.day_number, date: day.date })));
+    setTrip(tripData);
   }, [params.tripId]);
 
   useEffect(() => {
@@ -210,52 +224,64 @@ export default function TripMemoriesPage({ params }: PageProps) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-[#242424] mb-1.5">Tipo</label>
-                <select
-                  className={selectClass}
+                <Select
                   value={memoryType}
-                  onChange={(e) => {
-                    setMemoryType(e.target.value);
-                    if (e.target.value === "note") setFile(null);
+                  onValueChange={(val) => {
+                    setMemoryType(val);
+                    if (val === "note") setFile(null);
                   }}
                 >
-                  <option value="photo">Foto</option>
-                  <option value="video">Vídeo</option>
-                  <option value="note">Nota</option>
-                </select>
+                  <SelectTrigger className="w-full h-11 bg-white border-[rgba(0,0,0,0.12)] text-[#242424] focus:ring-[#ff6b6b] focus:border-[#ff6b6b] transition-colors rounded-lg">
+                    <SelectValue placeholder="Selecione um tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="photo">Foto</SelectItem>
+                    <SelectItem value="video">Vídeo</SelectItem>
+                    <SelectItem value="note">Nota</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#242424] mb-1.5">Dia</label>
-                <select
-                  className={selectClass}
-                  value={selectedDayId}
-                  onChange={(e) => setSelectedDayId(e.target.value)}
+                <Select
+                  value={selectedDayId || "none"}
+                  onValueChange={(val) => setSelectedDayId(val === "none" ? "" : val)}
                 >
-                  <option value="">Sem dia específico</option>
-                  {days.map((day) => (
-                    <option key={day.id} value={day.id}>
-                      Dia {day.day_number}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full h-11 bg-white border-[rgba(0,0,0,0.12)] text-[#242424] focus:ring-[#ff6b6b] focus:border-[#ff6b6b] transition-colors rounded-lg">
+                    <SelectValue placeholder="Sem dia específico" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem dia específico</SelectItem>
+                    {days.map((day) => (
+                      <SelectItem key={day.id} value={day.id}>
+                        {getDayLabel(day.day_number, trip?.start_date, day.date)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {selectedDayId && (
                 <div>
                   <label className="block text-sm font-medium text-[#242424] mb-1.5">
                     Atividade
                   </label>
-                  <select
-                    className={selectClass}
-                    value={selectedActivityId}
-                    onChange={(e) => setSelectedActivityId(e.target.value)}
+                  <Select
+                    value={selectedActivityId || "none"}
+                    onValueChange={(val) => setSelectedActivityId(val === "none" ? "" : val)}
                     disabled={!selectedDayId}
                   >
-                    <option value="">Sem atividade específica</option>
-                    {activities.map((activity) => (
-                      <option key={activity.id} value={activity.id}>
-                        {activity.title}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full h-11 bg-white border-[rgba(0,0,0,0.12)] text-[#242424] focus:ring-[#ff6b6b] focus:border-[#ff6b6b] transition-colors rounded-lg">
+                      <SelectValue placeholder="Sem atividade específica" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem atividade específica</SelectItem>
+                      {activities.map((activity) => (
+                        <SelectItem key={activity.id} value={activity.id}>
+                          {activity.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
