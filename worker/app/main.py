@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw, ImageOps
 JOB_TYPE_EMBEDDING = "embedding_generation"
 JOB_TYPE_THUMBNAIL = "thumbnail_generation"
 JOB_TYPE_ITINERARY = "itinerary_generation"
+JOB_TYPE_STORIES_EXPORT = "stories_export"
 
 
 def _ensure_production_secure_settings() -> None:
@@ -738,6 +739,27 @@ def _dispatch_job(
             openai_client=openai_client,
             source_id=source_id,
             payload=payload,
+        )
+
+    if job_type == JOB_TYPE_STORIES_EXPORT:
+        trip_id = str(payload.get("trip_id") or "")
+        story_export_job_id = str(payload.get("story_export_job_id") or "")
+
+        if not trip_id or not story_export_job_id:
+            raise RuntimeError("stories_export payload missing trip_id or story_export_job_id")
+
+        from app.stories.exporter import process_stories_export
+        return process_stories_export(
+            trip_id=trip_id,
+            story_export_job_id=story_export_job_id,
+            database_url=_normalize_database_url(os.getenv("DATABASE_URL", "")),
+            storage_client=storage_client,
+            bucket=bucket,
+            openai_client=openai_client,
+            openai_model=openai_embedding_model,
+            minio_public_endpoint=os.getenv(
+                "MINIO_PUBLIC_ENDPOINT", os.getenv("MINIO_ENDPOINT", "http://minio:9000")
+            ),
         )
 
     raise RuntimeError(f"Unsupported job_type: {job_type}")

@@ -78,7 +78,16 @@ export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: strin
           <span className="text-xs text-red-600">Falha ao gerar roteiro.</span>
         </div>
       )}
-    </>
+      <div className="mt-3 flex justify-end">
+        <Link
+          href={`/trips/${trip.id}/stories`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-xs font-semibold text-[#ff6b6b] hover:text-[#e05555] transition-colors"
+        >
+          <span>▶</span> Stories
+        </Link>
+      </div>
+</>
   );
 
   return (

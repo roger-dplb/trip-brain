@@ -9,6 +9,11 @@ from app.schemas.rag import (
     SemanticQueryRequest,
     SemanticQueryResponse,
 )
+from app.schemas.stories import (
+    StoryExportJobRead,
+    StoryExportStatusResponse,
+    StoryExportTriggerResponse,
+)
 from app.schemas.timeline import TripTimelineRead
 from app.schemas.trip import TripCreate, TripRead, TripUpdate
 from app.schemas.upload import (
@@ -38,6 +43,9 @@ __all__ = [
     "SemanticQueryRequest",
     "SemanticQueryResponse",
     "SemanticQueryMatch",
+    "StoryExportJobRead",
+    "StoryExportStatusResponse",
+    "StoryExportTriggerResponse",
     "TripTimelineRead",
     "UploadPresignRequest",
     "UploadPresignResponse",

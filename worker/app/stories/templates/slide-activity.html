@@ -1,0 +1,112 @@
+<!-- worker/app/stories/templates/slide-activity.html -->
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px; height: 1920px;
+    background: #111;
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    display: flex; flex-direction: column;
+    color: #fff; overflow: hidden; position: relative;
+  }
+  .photo-main {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+  }
+  .overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.15) 0%,
+      transparent 30%,
+      transparent 55%,
+      rgba(0,0,0,0.9) 100%
+    );
+  }
+  .top-label {
+    position: absolute; top: 60px; left: 70px;
+    font-size: 24px; letter-spacing: 4px; opacity: 0.7;
+    text-transform: uppercase; font-weight: 500;
+  }
+  .bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 60px 70px 80px;
+  }
+  .activity-title {
+    font-size: 80px; font-weight: 800; line-height: 1.05;
+    letter-spacing: -1px; margin-bottom: 20px;
+  }
+  .meta {
+    font-size: 30px; opacity: 0.65;
+    display: flex; gap: 30px; align-items: center;
+  }
+  .thumbnails {
+    display: flex; gap: 12px; margin-top: 30px;
+  }
+  .thumb {
+    width: 100px; height: 100px;
+    border-radius: 12px;
+    background-size: cover; background-position: center;
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+  .thumb-more {
+    width: 100px; height: 100px; border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="photo-main" id="photo-main"></div>
+<div class="overlay"></div>
+<div class="top-label" id="top-label"></div>
+<div class="bottom">
+  <div class="activity-title" id="activity-title"></div>
+  <div class="meta">
+    <span id="location"></span>
+    <span id="time"></span>
+  </div>
+  <div class="thumbnails" id="thumbnails"></div>
+</div>
+<script>
+  const data = window.__DATA__ || {};
+  const urls = data.photo_urls || [];
+
+  if (urls[0]) {
+    document.getElementById('photo-main').style.backgroundImage = `url('${urls[0]}')`;
+  }
+
+  document.getElementById('top-label').textContent =
+    `DIA ${data.day_number || ''} · ${(data.day_city || '').toUpperCase()}`;
+  document.getElementById('activity-title').textContent = data.activity_title || '';
+
+  const loc = data.activity_location;
+  const time = data.activity_time;
+  if (loc) document.getElementById('location').textContent = `📍 ${loc}`;
+  if (time) document.getElementById('time').textContent = `🕐 ${time}`;
+
+  if (urls.length > 1) {
+    const container = document.getElementById('thumbnails');
+    const extras = urls.slice(1, 4);
+    extras.forEach(url => {
+      const div = document.createElement('div');
+      div.className = 'thumb';
+      div.style.backgroundImage = `url('${url}')`;
+      container.appendChild(div);
+    });
+    if (urls.length > 4) {
+      const more = document.createElement('div');
+      more.className = 'thumb-more';
+      more.textContent = `+${urls.length - 4}`;
+      container.appendChild(more);
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!-- worker/app/stories/templates/slide-cover.html -->
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px; height: 1920px;
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    padding: 80px 70px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .day-label {
+    font-size: 28px; font-weight: 600; letter-spacing: 6px;
+    text-transform: uppercase; opacity: 0.6;
+  }
+  .center {
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: 24px;
+  }
+  .city {
+    font-size: 110px; font-weight: 800; line-height: 1;
+    letter-spacing: -2px;
+  }
+  .date {
+    font-size: 36px; opacity: 0.6; font-weight: 400;
+  }
+  .caption {
+    font-size: 48px; font-weight: 300; line-height: 1.4;
+    font-style: italic; opacity: 0.9; max-width: 900px;
+    margin-top: 20px;
+  }
+  .stats {
+    font-size: 28px; opacity: 0.4; letter-spacing: 2px;
+  }
+  .accent-bar {
+    width: 80px; height: 6px;
+    background: #ff6b6b; border-radius: 3px;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="day-label" id="day-label"></div>
+<div class="center">
+  <div class="accent-bar"></div>
+  <div class="city" id="city"></div>
+  <div class="date" id="date"></div>
+  <div class="caption" id="caption"></div>
+</div>
+<div class="stats" id="stats"></div>
+<script>
+  const data = window.__DATA__ || {};
+  document.getElementById('day-label').textContent = `DIA ${data.day_number || ''}`;
+  document.getElementById('city').textContent = data.day_city || '';
+  document.getElementById('date').textContent = data.day_date || '';
+  document.getElementById('caption').textContent = data.day_caption || '';
+  document.getElementById('stats').textContent =
+    `${data.total_activities || 0} ATIVIDADES · ${data.total_photos || 0} FOTOS`;
+</script>
+</body>
+</html>

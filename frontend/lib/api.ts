@@ -77,6 +77,15 @@ export type LoginResponse = {
   role: string;
 };
 
+export type StoryExportJob = {
+  job_id: string;
+  status: "queued" | "processing" | "done" | "failed";
+  cached?: boolean;
+  zip_url?: string | null;
+  mp4_url?: string | null;
+  error_msg?: string | null;
+};
+
 const API_BASE =
   process.env.INTERNAL_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??
@@ -373,6 +382,22 @@ export function completeUpload(payload: {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     },
+    API_BASE_PUBLIC,
+  );
+}
+
+export function triggerStoriesExport(tripId: string): Promise<StoryExportJob> {
+  return request<StoryExportJob>(
+    `/trips/${tripId}/stories/export`,
+    { method: "POST" },
+    API_BASE_PUBLIC,
+  );
+}
+
+export function fetchStoriesExportJob(tripId: string, jobId: string): Promise<StoryExportJob> {
+  return request<StoryExportJob>(
+    `/trips/${tripId}/stories/export/${jobId}`,
+    undefined,
     API_BASE_PUBLIC,
   );
 }
