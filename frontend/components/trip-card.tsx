@@ -1,6 +1,7 @@
 "use client";
 
 import { Trip } from "@/lib/api";
+import { formatDate } from "@/lib/utils";
 import { TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -17,7 +18,7 @@ export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: strin
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-[#242424] truncate">{trip.name}</h2>
-            <p className="text-sm text-[#8b8b8b] mt-0.5">{trip.destination}</p>
+            <p className="text-sm text-[#8b8b8b] mt-0.5">{trip.destinations.join(" · ")}</p>
           </div>
           <button
             onClick={(e) => {
@@ -49,7 +50,7 @@ export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: strin
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            {[trip.start_date, trip.end_date].filter(Boolean).join(" → ")}
+            {[trip.start_date ? formatDate(trip.start_date) : null, trip.end_date ? formatDate(trip.end_date) : null].filter(Boolean).join(" → ")}
           </p>
         )}
       </Link>

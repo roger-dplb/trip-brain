@@ -214,8 +214,8 @@ export function TripSidebar({ trip, tripId, isOpen = false, onClose }: Props) {
         {trip && (
           <div className="bg-[#f3ece8] rounded-xl p-4">
             <p className="font-semibold text-[#242424] text-sm">{trip.name}</p>
-            {trip.destination && (
-              <p className="text-xs text-[#8b8b8b] mt-1">{trip.destination}</p>
+            {trip.destinations.length > 0 && (
+              <p className="text-xs text-[#8b8b8b] mt-1">{trip.destinations.join(" · ")}</p>
             )}
             {trip.start_date && trip.end_date && (
               <p className="text-xs text-[#8b8b8b] mt-0.5">

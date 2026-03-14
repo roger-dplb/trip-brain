@@ -16,6 +16,7 @@ import {
   updateActivity,
   updateDay,
 } from "@/lib/api";
+import { getDayLabel } from "@/lib/utils";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -274,10 +275,10 @@ export default function TripDetailsPage({ params }: PageProps) {
       <div className="relative h-[240px] sm:h-[280px] bg-gradient-to-br from-[#ff6b6b] via-[#ff8c69] to-[#f3905a] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute bottom-6 sm:bottom-10 left-4 sm:left-8 lg:left-12 right-4 sm:right-8 lg:right-12">
-          {trip.destination && (
+          {trip.destinations.length > 0 && (
             <span className="inline-flex items-center gap-1.5 bg-[#ff6b6b] px-3 py-1.5 rounded-full text-white text-xs sm:text-sm font-semibold mb-3">
               <PinIcon size={14} />
-              {trip.destination}
+              {trip.destinations.join(" · ")}
             </span>
           )}
           <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2 leading-tight">{trip.name}</h1>
@@ -312,9 +313,9 @@ export default function TripDetailsPage({ params }: PageProps) {
             </div>
             <div className="min-w-0">
               <p className="text-xl sm:text-2xl font-bold text-[#242424] truncate">
-                {trip.destination || "—"}
+                {trip.destinations.length > 0 ? trip.destinations.join(" · ") : "—"}
               </p>
-              <p className="text-sm text-[#8b8b8b]">Destino</p>
+              <p className="text-sm text-[#8b8b8b]">Destinos</p>
             </div>
           </div>
           <div className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] shadow-md p-4 sm:p-6 flex items-center gap-4">
@@ -419,13 +420,10 @@ export default function TripDetailsPage({ params }: PageProps) {
                         {day.day_number}
                       </div>
                       <h3 className="font-semibold text-[#242424] text-lg">
-                        Dia {day.day_number}
+                        {getDayLabel(day.day_number, trip?.start_date, day.date)}
                       </h3>
                     </div>
                     <div className="flex items-center gap-3">
-                      {day.date && (
-                        <span className="text-sm text-[#8b8b8b]">{day.date}</span>
-                      )}
                       <button
                         className="rounded-lg border border-red-200 p-1.5 text-red-400 hover:text-red-600 hover:border-red-400 transition-colors"
                         onClick={() => onDeleteDay(day.id)}
