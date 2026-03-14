@@ -1,0 +1,76 @@
+<h2>Como funciona o input de destinos?</h2>
+<p class="subtitle">Escolha o modelo de interação para adicionar múltiplos destinos</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: #fff9f6;">
+      <div style="font-size:11px;color:#8b8b8b;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Destinos</div>
+      <!-- Tags já adicionadas -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <span style="display:inline-flex;align-items:center;gap:5px;background:#ff6b6b;color:white;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:500">
+          📍 Aveiro, Portugal
+          <span style="cursor:pointer;opacity:.8;font-size:14px">×</span>
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:5px;background:#ff6b6b;color:white;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:500">
+          📍 Madrid, Espanha
+          <span style="cursor:pointer;opacity:.8;font-size:14px">×</span>
+        </span>
+      </div>
+      <!-- Input com autocomplete inline -->
+      <div style="position:relative">
+        <input class="mock-input" placeholder="Adicionar destino..." style="padding-left:28px" readonly />
+        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:14px">🔍</span>
+        <!-- Dropdown sugestões -->
+        <div style="position:absolute;top:36px;left:0;right:0;background:white;border:1px solid rgba(0,0,0,.1);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:10">
+          <div style="padding:8px 12px;font-size:12px;color:#8b8b8b;border-bottom:1px solid rgba(0,0,0,.06)">Sugestões</div>
+          <div style="padding:8px 12px;font-size:13px;color:#242424;display:flex;align-items:center;gap:8px;cursor:pointer;background:#fff9f6">
+            <span>📍</span> <strong>Porto</strong>, Portugal
+          </div>
+          <div style="padding:8px 12px;font-size:13px;color:#242424;display:flex;align-items:center;gap:8px;cursor:pointer">
+            <span>📍</span> <strong>Porto Alegre</strong>, Brasil
+          </div>
+          <div style="padding:8px 12px;font-size:13px;color:#242424;display:flex;align-items:center;gap:8px;cursor:pointer">
+            <span>📍</span> <strong>Port Louis</strong>, Maurícia
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Tag input com autocomplete</h3>
+      <p>Campo único: digita, vê sugestões em dropdown, clica para adicionar como tag. Remove com ×.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: #fff9f6;">
+      <div style="font-size:11px;color:#8b8b8b;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Destinos</div>
+      <!-- Search + botão -->
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="position:relative;flex:1">
+          <input class="mock-input" placeholder="Buscar cidade ou país..." style="padding-left:28px" readonly />
+          <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:14px">🔍</span>
+        </div>
+        <button class="mock-button" style="white-space:nowrap;padding:0 14px;background:#ff6b6b;color:white;border:none;border-radius:8px;font-size:13px">+ Adicionar</button>
+      </div>
+      <!-- Lista de destinos adicionados -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;justify-content:space-between;background:white;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:8px 12px">
+          <span style="font-size:13px;color:#242424;display:flex;align-items:center;gap:8px"><span>📍</span> Aveiro, Portugal</span>
+          <span style="color:#ff6b6b;cursor:pointer;font-size:18px">×</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:white;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:8px 12px">
+          <span style="font-size:13px;color:#242424;display:flex;align-items:center;gap:8px"><span>📍</span> Madrid, Espanha</span>
+          <span style="color:#ff6b6b;cursor:pointer;font-size:18px">×</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Busca + lista</h3>
+      <p>Campo de busca separado com botão "Adicionar". Destinos aparecem como itens numa lista abaixo.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">Clique para selecionar • Comente no terminal se quiser ajuste</p>

@@ -1,0 +1,77 @@
+<h2>Como deve ser cada slide de dia?</h2>
+<p class="subtitle">Escolha o layout que melhor representa a história do dia</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#111;padding:16px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;border-radius:8px;aspect-ratio:9/16;max-height:260px;">
+      <div style="color:#fff;font-size:11px;opacity:0.7;letter-spacing:1px">DIA 3 · KYOTO</div>
+      <div style="flex:1;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:6px;margin:8px 0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;opacity:0.6;">foto destaque</div>
+      <div>
+        <div style="color:#fff;font-size:14px;font-weight:700">Kyoto</div>
+        <div style="color:#fff;opacity:0.7;font-size:11px">✓ Fushimi Inari &nbsp;✓ Nishiki Market &nbsp;✓ Gion</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Foto + atividades</h3>
+      <p>Foto destaque do dia com lista das atividades feitas embaixo</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#111;padding:16px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;border-radius:8px;aspect-ratio:9/16;max-height:260px;">
+      <div style="color:#fff;font-size:11px;opacity:0.7;letter-spacing:1px">DIA 3 · KYOTO</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;flex:1;margin:8px 0;">
+        <div style="background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:4px"></div>
+        <div style="background:linear-gradient(135deg,#4facfe,#00f2fe);border-radius:4px"></div>
+        <div style="background:linear-gradient(135deg,#43e97b,#38f9d7);border-radius:4px"></div>
+        <div style="background:linear-gradient(135deg,#fa709a,#fee140);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">+5</div>
+      </div>
+      <div style="color:#fff;font-size:14px;font-weight:700">Dia 3 — Kyoto</div>
+    </div>
+    <div class="card-body">
+      <h3>B — Grid de fotos</h3>
+      <p>Mosaico com as fotos do dia (até 4 + contador)</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#111;padding:16px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;border-radius:8px;aspect-ratio:9/16;max-height:260px;">
+      <div style="color:#fff;font-size:11px;opacity:0.7;letter-spacing:1px">DIA 3 · KYOTO</div>
+      <div style="flex:1;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:6px;margin:8px 0;position:relative;display:flex;align-items:flex-end;padding:10px;">
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.8));border-radius:6px"></div>
+        <div style="position:relative;z-index:1">
+          <div style="color:#fff;font-size:13px;font-weight:700">Kyoto</div>
+          <div style="color:#fff;opacity:0.8;font-size:10px;font-style:italic">"O dia mais bonito da viagem. Fushimi Inari de manhã cedo, sem turistas."</div>
+        </div>
+      </div>
+      <div style="color:#fff;font-size:11px;opacity:0.5">3 atividades · 12 fotos · 1 vídeo</div>
+    </div>
+    <div class="card-body">
+      <h3>C — Foto + nota do dia</h3>
+      <p>Foto destaque com a nota escrita do dia como legenda</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="d" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#111;padding:16px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;border-radius:8px;aspect-ratio:9/16;max-height:260px;">
+      <div style="color:#fff;font-size:11px;opacity:0.7;letter-spacing:1px">DIA 3 · KYOTO</div>
+      <div style="flex:1;margin:8px 0;display:flex;flex-direction:column;gap:4px;">
+        <div style="flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;opacity:0.7">foto destaque</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;">
+          <div style="background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:4px"></div>
+          <div style="background:linear-gradient(135deg,#4facfe,#00f2fe);border-radius:4px"></div>
+        </div>
+      </div>
+      <div>
+        <div style="color:#fff;font-size:13px;font-weight:700">Kyoto</div>
+        <div style="color:#fff;opacity:0.6;font-size:10px">✓ Fushimi Inari &nbsp;✓ Nishiki Market</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>D — Foto grande + miniaturas + atividades</h3>
+      <p>Foto principal em destaque com miniaturas abaixo e lista de atividades</p>
+    </div>
+  </div>
+
+</div>
