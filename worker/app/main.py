@@ -746,9 +746,12 @@ def _dispatch_job(
         story_export_job_id = str(payload.get("story_export_job_id") or "")
 
         if not trip_id or not story_export_job_id:
-            raise RuntimeError("stories_export payload missing trip_id or story_export_job_id")
+            raise RuntimeError(
+                "stories_export payload missing trip_id or story_export_job_id"
+            )
 
         from app.stories.exporter import process_stories_export
+
         return process_stories_export(
             trip_id=trip_id,
             story_export_job_id=story_export_job_id,
@@ -758,7 +761,8 @@ def _dispatch_job(
             openai_client=openai_client,
             openai_model=openai_embedding_model,
             minio_public_endpoint=os.getenv(
-                "MINIO_PUBLIC_ENDPOINT", os.getenv("MINIO_ENDPOINT", "http://minio:9000")
+                "MINIO_PUBLIC_ENDPOINT",
+                os.getenv("MINIO_ENDPOINT", "http://minio:9000"),
             ),
         )
 
