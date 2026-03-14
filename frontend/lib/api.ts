@@ -1,7 +1,7 @@
 export type Trip = {
   id: string;
   name: string;
-  destination: string;
+  destinations: string[];
   start_date: string;
   end_date: string;
   summary?: string | null;
@@ -197,7 +197,7 @@ export function fetchMemoriesByTrip(tripId: string): Promise<Memory[]> {
 
 export function createTrip(payload: {
   name: string;
-  destination: string;
+  destinations: string[];
   start_date: string;
   end_date: string;
   summary?: string;
