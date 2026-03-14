@@ -50,7 +50,7 @@ def test_happy_path_calls_all_steps():
     job_id = str(uuid.uuid4())
 
     with (
-        patch("stories.exporter.psycopg") as mock_psycopg,
+        patch("stories.exporter.psycopg"),
         patch("stories.exporter.build_slides_data") as mock_build,
         patch("stories.exporter.generate_day_caption", return_value="Dia incrível"),
         patch("stories.exporter.render_slide_png"),
