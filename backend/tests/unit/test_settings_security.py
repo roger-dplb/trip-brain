@@ -20,7 +20,7 @@ def _build_settings(**overrides) -> Settings:
         "openai_api_key": "",
         "openai_embedding_model": "text-embedding-3-small",
         "itinerary_provider": "openai",
-        "itinerary_model": "gpt-5",
+        "itinerary_model": "gpt-5.4",
         "itinerary_prompt_strategy": "summary-first-day-by-day",
         "couple_auth_enabled": False,
         "couple_primary_name": "partner_a",

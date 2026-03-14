@@ -104,7 +104,7 @@ class RagService:
                 )
                 VALUES (
                     :job_id, 'itinerary_generation', 'trip', :trip_id,
-                    'pending', :payload::jsonb, :payload_hash, NOW()
+                    'pending', CAST(:payload AS JSONB), :payload_hash, NOW()
                 )
                 ON CONFLICT (job_type, source_type, source_id) DO UPDATE
                 SET

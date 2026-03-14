@@ -326,9 +326,7 @@ def _upsert_job(
                     ELSE worker_jobs.last_error
                 END,
                 updated_at = NOW()
-            RETURNING (xmax = 0) OR (
-                worker_jobs.payload_hash IS DISTINCT FROM EXCLUDED.payload_hash
-            )
+            RETURNING (xmax = 0)
             """,
             (
                 uuid.uuid4(),
@@ -388,28 +386,29 @@ def _consume_pending_jobs(
         payload,
     ) in rows:
         try:
-            _set_job_running(connection, job_id)
-            _log(
-                "job_started",
-                job_id=job_id,
-                job_type=job_type,
-                source_type=source_type,
-                source_id=source_id,
-                attempt=attempt_count + 1,
-            )
+            with connection.transaction():
+                _set_job_running(connection, job_id)
+                _log(
+                    "job_started",
+                    job_id=job_id,
+                    job_type=job_type,
+                    source_type=source_type,
+                    source_id=source_id,
+                    attempt=attempt_count + 1,
+                )
 
-            result = _dispatch_job(
-                connection=connection,
-                storage_client=storage_client,
-                bucket=bucket,
-                openai_client=openai_client,
-                openai_embedding_model=openai_embedding_model,
-                job_type=job_type,
-                source_type=source_type,
-                source_id=source_id,
-                payload=payload,
-            )
-            _set_job_done(connection, job_id, result)
+                result = _dispatch_job(
+                    connection=connection,
+                    storage_client=storage_client,
+                    bucket=bucket,
+                    openai_client=openai_client,
+                    openai_embedding_model=openai_embedding_model,
+                    job_type=job_type,
+                    source_type=source_type,
+                    source_id=source_id,
+                    payload=payload,
+                )
+                _set_job_done(connection, job_id, result)
             _log("job_done", job_id=job_id, job_type=job_type, source_id=source_id)
             processed += 1
         except Exception as exc:
@@ -525,8 +524,8 @@ def _persist_itinerary_worker(
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO days (id, trip_id, day_number, date, notes, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
+                    INSERT INTO days (id, trip_id, day_number, date, notes, created_at)
+                    VALUES (%s, %s, %s, %s, %s, NOW())
                     """,
                     (
                         day_id,
@@ -578,7 +577,7 @@ def _run_itinerary_generation(
     source_id: uuid.UUID,
     payload: dict,
 ) -> dict:
-    itinerary_model = os.getenv("ITINERARY_MODEL", "gpt-4o")
+    itinerary_model = os.getenv("ITINERARY_MODEL", "gpt-5.4")
     preferences = payload.get("preferences")
     max_days = int(payload.get("max_days") or 7)
 
