@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.trip import Trip
@@ -19,7 +20,9 @@ class TripRepository:
     ) -> list[Trip]:
         query = self.db.query(Trip)
         if destination:
-            query = query.filter(Trip.destination.ilike(f"%{destination}%"))
+            query = query.filter(
+                func.array_to_string(Trip.destinations, " ").ilike(f"%{destination}%")
+            )
         if status:
             query = query.filter(Trip.status == status)
         return query.order_by(Trip.start_date.desc()).offset(offset).limit(limit).all()
