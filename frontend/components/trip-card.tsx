@@ -1,7 +1,7 @@
 "use client";
 
 import { Trip } from "@/lib/api";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getTripTimeStatus } from "@/lib/utils";
 import { TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import { useState } from "react";
 export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: string | number) => void }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const isGenerating = trip.status === "generating_itinerary";
+  const timeStatus = isGenerating ? null : getTripTimeStatus(trip.start_date, trip.end_date);
 
   const cardContent = (
     <>
@@ -78,7 +79,32 @@ export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: strin
           <span className="text-xs text-red-600">Falha ao gerar roteiro.</span>
         </div>
       )}
-      <div className="mt-3 flex justify-end">
+      <div className={`mt-3 flex items-center ${timeStatus ? "justify-between" : "justify-end"}`}>
+        {timeStatus?.type === "upcoming" && (
+          <span className="flex items-center gap-1 rounded-full bg-[#fff0ed] px-2.5 py-1 text-xs font-medium text-[#ff6b6b]">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            {timeStatus.daysUntil === 1 ? "1 dia para a viagem" : `${timeStatus.daysUntil} dias para a viagem`}
+          </span>
+        )}
+        {timeStatus?.type === "ongoing" && (
+          <span className="flex items-center gap-1 rounded-full bg-[#f0fdf4] px-2.5 py-1 text-xs font-medium text-[#16a34a]">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 2c-2-2-4-2-5.5-.5L10 5 1.8 6.2l5 5-1.9 1.9 3 3 1.9-1.9 5 5z" />
+            </svg>
+            Em andamento
+          </span>
+        )}
+        {timeStatus?.type === "past" && (
+          <span className="flex items-center gap-1 rounded-full bg-[#f5f5f5] px-2.5 py-1 text-xs font-medium text-[#8b8b8b]">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Finalizada
+          </span>
+        )}
         <Link
           href={`/trips/${trip.id}/stories`}
           onClick={(e) => e.stopPropagation()}
