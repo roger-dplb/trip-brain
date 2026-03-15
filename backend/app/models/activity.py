@@ -31,5 +31,11 @@ class Activity(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("locations.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     day = relationship("Day", back_populates="activities")
+    location_detail = relationship("Location", foreign_keys=[location_id])
