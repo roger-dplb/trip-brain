@@ -119,15 +119,29 @@ export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: strin
   return (
     <>
       {isGenerating ? (
-        <div className="block bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-5 shadow-sm cursor-default opacity-80">
-          {cardContent}
+        <div className="block bg-white rounded-xl border border-[rgba(0,0,0,0.08)] shadow-sm cursor-default opacity-80 overflow-hidden">
+          {trip.cover_image_url && (
+            <img
+              src={trip.cover_image_url}
+              alt="Capa da viagem"
+              className="w-full h-[120px] object-cover"
+            />
+          )}
+          <div className="p-5">{cardContent}</div>
         </div>
       ) : (
         <Link
           href={`/trips/${trip.id}`}
-          className="block bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-5 shadow-sm hover:shadow-md transition-shadow"
+          className="block bg-white rounded-xl border border-[rgba(0,0,0,0.08)] shadow-sm hover:shadow-md transition-shadow overflow-hidden"
         >
-          {cardContent}
+          {trip.cover_image_url && (
+            <img
+              src={trip.cover_image_url}
+              alt="Capa da viagem"
+              className="w-full h-[120px] object-cover"
+            />
+          )}
+          <div className="p-5">{cardContent}</div>
         </Link>
       )}
 
