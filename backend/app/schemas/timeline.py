@@ -4,6 +4,8 @@ from datetime import datetime, time
 
 from pydantic import BaseModel
 
+from app.schemas.location import LocationResponse
+
 
 class TimelineActivity(BaseModel):
     id: uuid.UUID
@@ -11,6 +13,7 @@ class TimelineActivity(BaseModel):
     location: str | None
     scheduled_time: time | None
     status: str
+    location_detail: LocationResponse | None = None
 
 
 class TimelineMemory(BaseModel):
@@ -28,6 +31,7 @@ class TimelineDay(BaseModel):
     date: DateType | None
     activities: list[TimelineActivity]
     memories: list[TimelineMemory]
+    location: LocationResponse | None = None
 
 
 class TripTimelineRead(BaseModel):

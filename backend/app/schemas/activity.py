@@ -3,6 +3,8 @@ from datetime import datetime, time
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.location import LocationResponse
+
 
 class ActivityBase(BaseModel):
     day_id: uuid.UUID
@@ -31,3 +33,4 @@ class ActivityRead(ActivityBase):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    location_detail: LocationResponse | None = None
