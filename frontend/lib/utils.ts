@@ -27,3 +27,37 @@ export function getDayLabel(dayNumber: number, tripStartDate?: string | null, da
   }
   return `Dia ${dayNumber}`;
 }
+
+export type TripTimeStatus =
+  | { type: "upcoming"; daysUntil: number }
+  | { type: "ongoing" }
+  | { type: "past" }
+  | null;
+
+function parseUtcMidnight(dateStr: string): Date {
+  const parts = dateStr.split("-");
+  return new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+}
+
+export function getTripTimeStatus(
+  startDate: string | null | undefined,
+  endDate: string | null | undefined
+): TripTimeStatus {
+  if (!startDate) return null;
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const today = parseUtcMidnight(todayStr);
+  const start = parseUtcMidnight(startDate);
+  const end = endDate ? parseUtcMidnight(endDate) : null;
+
+  if (start > today) {
+    const daysUntil = (start.getTime() - today.getTime()) / 86_400_000;
+    return { type: "upcoming", daysUntil };
+  }
+
+  if (end && today <= end) {
+    return { type: "ongoing" };
+  }
+
+  return { type: "past" };
+}
