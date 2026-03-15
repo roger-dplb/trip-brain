@@ -6,6 +6,7 @@ export type Trip = {
   end_date: string;
   summary?: string | null;
   status: string;
+  cover_image_url?: string | null;
 };
 
 export type Day = {
@@ -67,6 +68,7 @@ export type UploadPresignResponse = {
   object_key: string;
   upload_url: string;
   expires_in: number;
+  public_url: string;
 };
 
 export type LoginResponse = {
@@ -186,6 +188,21 @@ export function fetchTrips(): Promise<Trip[]> {
 
 export function fetchTrip(tripId: string): Promise<Trip> {
   return request<Trip>(`/trips/${tripId}`);
+}
+
+export function updateTrip(
+  tripId: string,
+  data: { cover_image_url?: string | null },
+): Promise<Trip> {
+  return request<Trip>(
+    `/trips/${tripId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+    API_BASE_PUBLIC,
+  );
 }
 
 export function fetchDaysByTrip(tripId: string): Promise<Day[]> {
