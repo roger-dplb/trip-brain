@@ -1,6 +1,7 @@
 from app.schemas.activity import ActivityCreate, ActivityRead, ActivityUpdate
 from app.schemas.day import DayCreate, DayRead, DayUpdate
 from app.schemas.error import ErrorBody, ErrorResponse
+from app.schemas.location import LocationResponse
 from app.schemas.memory import MemoryCreate, MemoryRead, MemoryUpdate
 from app.schemas.rag import (
     ItineraryGenerationRequest,
@@ -35,6 +36,7 @@ __all__ = [
     "ActivityCreate",
     "ActivityRead",
     "ActivityUpdate",
+    "LocationResponse",
     "MemoryCreate",
     "MemoryRead",
     "MemoryUpdate",
