@@ -23,6 +23,7 @@ export type Day = {
   day_number: number;
   date?: string | null;
   notes?: string | null;
+  location?: Location | null;
 };
 
 export type Activity = {

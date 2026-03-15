@@ -387,7 +387,7 @@ export default function TripDetailsPage({ params }: PageProps) {
           onClick={() => setShowCoverModal(true)}
           className="absolute top-3 right-4 sm:top-4 sm:right-8 z-10 flex items-center gap-1.5 rounded-lg bg-black/30 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
         >
-          ✏️ Alterar capa
+          ✏️
         </button>
         <div className="absolute bottom-6 sm:bottom-10 left-4 sm:left-8 lg:left-12 right-4 sm:right-8 lg:right-12">
           {trip.destinations.length > 0 && (
@@ -603,6 +603,18 @@ export default function TripDetailsPage({ params }: PageProps) {
                         <span className="text-xs font-bold text-[#ff6b6b] uppercase tracking-wider bg-[#fff0f0] px-2 py-0.5 rounded-md">
                           Dia {day.day_number}
                         </span>
+                        {(() => {
+                          const label = day.location
+                            ? `${day.location.city}, ${day.location.country}`
+                            : Array.from(new Set((activitiesByDay[day.id] || []).map(a => a.location).filter((l): l is string => !!l))).slice(0, 3).join(" · ");
+                        
+                          return label ? (
+                            <span className="text-xs font-medium text-[#8b8b8b] flex items-center gap-1">
+                              <span className="w-1 h-1 rounded-full bg-[rgba(0,0,0,0.15)] mx-1"></span>
+                              {label}
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
                       <h3 className="font-semibold text-[#242424] text-lg">
                         {getDayLabel(day.day_number, trip?.start_date, day.date)}
@@ -705,16 +717,7 @@ export default function TripDetailsPage({ params }: PageProps) {
                                   {activity.title}
                                 </span>
                               )}
-                              <div className="flex items-center gap-2 sm:shrink-0">
-                                <select
-                                  className="w-full sm:w-auto rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-2 py-1 text-xs text-[#242424] focus:border-[#ff6b6b] focus:outline-none"
-                                  value={activity.status}
-                                  onChange={(e) => onUpdateActivityStatus(activity, e.target.value)}
-                                >
-                                  <option value="planned">Planejado</option>
-                                  <option value="done">Feito</option>
-                                  <option value="skipped">Pulado</option>
-                                </select>
+                              <div className="flex items-center gap-2">
                                 <button
                                   className="rounded-lg border border-red-200 p-1.5 text-red-400 hover:text-red-600 hover:border-red-400 transition-colors"
                                   onClick={() => onDeleteActivity(activity.id)}

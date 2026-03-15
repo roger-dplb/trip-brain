@@ -20,10 +20,11 @@ class StoryExportRepository:
 
     def upsert_queued(self, trip_id: uuid.UUID) -> StoryExportJob:
         """Insert a new job or reset an existing one to queued status."""
+        job_id = uuid.uuid4()
         self.db.execute(
             text("""
-                INSERT INTO story_export_jobs (trip_id, status, created_at)
-                VALUES (:trip_id, 'queued', now())
+                INSERT INTO story_export_jobs (id, trip_id, status, created_at)
+                VALUES (:id, :trip_id, 'queued', now())
                 ON CONFLICT (trip_id) DO UPDATE
                 SET status = 'queued',
                     error_msg = NULL,
@@ -31,7 +32,7 @@ class StoryExportRepository:
                     mp4_object_key = NULL,
                     created_at = now()
             """),
-            {"trip_id": trip_id},
+            {"id": job_id, "trip_id": trip_id},
         )
         self.db.flush()
         return self.get_by_trip(trip_id)  # type: ignore[return-value]
