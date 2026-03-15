@@ -9,6 +9,14 @@ export type Trip = {
   cover_image_url?: string | null;
 };
 
+export type Location = {
+  id: string;
+  country: string;
+  city: string;
+  region?: string | null;
+  place_name?: string | null;
+};
+
 export type Day = {
   id: string;
   trip_id: string;
@@ -25,6 +33,7 @@ export type Activity = {
   scheduled_time?: string | null;
   notes?: string | null;
   status: string;
+  location_detail?: Location | null;
 };
 
 export type Memory = {
@@ -46,12 +55,14 @@ export type Timeline = {
     id: string;
     day_number: number;
     date?: string | null;
+    location?: Location | null;
     activities: Array<{
       id: string;
       title: string;
       location?: string | null;
       scheduled_time?: string | null;
       status: string;
+      location_detail?: Location | null;
     }>;
     memories: Array<{
       id: string;

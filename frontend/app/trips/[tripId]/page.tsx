@@ -597,10 +597,12 @@ export default function TripDetailsPage({ params }: PageProps) {
                   className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] overflow-hidden"
                 >
                   {/* Day header */}
-                  <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-[#ff6b6b] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-                        {day.day_number}
+                  <div className="bg-[#fafafa] border-b border-[rgba(0,0,0,0.08)] px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-bold text-[#ff6b6b] uppercase tracking-wider bg-[#fff0f0] px-2 py-0.5 rounded-md">
+                          Dia {day.day_number}
+                        </span>
                       </div>
                       <h3 className="font-semibold text-[#242424] text-lg">
                         {getDayLabel(day.day_number, trip?.start_date, day.date)}
@@ -608,7 +610,7 @@ export default function TripDetailsPage({ params }: PageProps) {
                     </div>
                     <div className="flex items-center gap-3">
                       <button
-                        className="rounded-lg border border-red-200 p-1.5 text-red-400 hover:text-red-600 hover:border-red-400 transition-colors"
+                        className="rounded-lg border border-red-200 p-1.5 text-red-400 hover:text-red-600 hover:border-red-400 transition-colors bg-white"
                         onClick={() => onDeleteDay(day.id)}
                         type="button"
                         aria-label="Remover dia"

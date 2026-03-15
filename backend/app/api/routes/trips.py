@@ -4,10 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.activity import Activity
+from app.models.day import Day
+from app.models.location import Location
 from app.repositories.activity_repository import ActivityRepository
 from app.repositories.day_repository import DayRepository
 from app.repositories.memory_repository import MemoryRepository
 from app.repositories.trip_repository import TripRepository
+from app.schemas.location import LocationPatchRequest, LocationResponse
 from app.schemas.timeline import (
     TimelineActivity,
     TimelineDay,
@@ -88,6 +92,9 @@ def get_trip_timeline(trip_id: uuid.UUID, db: Session = Depends(get_db)):
                 id=day.id,
                 day_number=day.day_number,
                 date=day.date,
+                location=LocationResponse.model_validate(day.location)
+                if day.location
+                else None,
                 activities=[
                     TimelineActivity(
                         id=activity.id,
@@ -95,6 +102,11 @@ def get_trip_timeline(trip_id: uuid.UUID, db: Session = Depends(get_db)):
                         location=activity.location,
                         scheduled_time=activity.scheduled_time,
                         status=activity.status,
+                        location_detail=LocationResponse.model_validate(
+                            activity.location_detail
+                        )
+                        if activity.location_detail
+                        else None,
                     )
                     for activity in activities
                 ],
@@ -138,3 +150,64 @@ def delete_trip(trip_id: uuid.UUID, service: TripService = Depends(get_service))
         )
     service.delete(trip)
     return None
+
+
+@router.patch("/{trip_id}/days/{day_id}/location", response_model=LocationResponse)
+def patch_day_location(
+    trip_id: uuid.UUID,
+    day_id: uuid.UUID,
+    payload: LocationPatchRequest,
+    db: Session = Depends(get_db),
+):
+    day = db.query(Day).filter(Day.id == day_id, Day.trip_id == trip_id).first()
+    if not day:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Day not found"
+        )
+    loc = Location(
+        trip_id=trip_id,
+        country=payload.country,
+        city=payload.city,
+        region=payload.region,
+        place_name=payload.place_name,
+    )
+    db.add(loc)
+    db.flush()
+    day.location_id = loc.id
+    db.commit()
+    db.refresh(loc)
+    return LocationResponse.model_validate(loc)
+
+
+@router.patch(
+    "/{trip_id}/activities/{activity_id}/location", response_model=LocationResponse
+)
+def patch_activity_location(
+    trip_id: uuid.UUID,
+    activity_id: uuid.UUID,
+    payload: LocationPatchRequest,
+    db: Session = Depends(get_db),
+):
+    activity = (
+        db.query(Activity)
+        .join(Day, Day.id == Activity.day_id)
+        .filter(Activity.id == activity_id, Day.trip_id == trip_id)
+        .first()
+    )
+    if not activity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found"
+        )
+    loc = Location(
+        trip_id=trip_id,
+        country=payload.country,
+        city=payload.city,
+        region=payload.region,
+        place_name=payload.place_name,
+    )
+    db.add(loc)
+    db.flush()
+    activity.location_id = loc.id
+    db.commit()
+    db.refresh(loc)
+    return LocationResponse.model_validate(loc)

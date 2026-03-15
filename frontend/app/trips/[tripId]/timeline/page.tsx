@@ -10,6 +10,27 @@ type PageProps = {
   params: { tripId: string };
 };
 
+type LocationGroup = {
+  location: Timeline["days"][number]["location"];
+  days: Timeline["days"];
+};
+
+function groupDaysByLocation(days: Timeline["days"]): LocationGroup[] {
+  const groups: LocationGroup[] = [];
+  for (const day of days) {
+    const loc = day.location ?? null;
+    const key = loc ? `${loc.country}|${loc.city}` : null;
+    const last = groups[groups.length - 1];
+    const lastKey = last?.location ? `${last.location.country}|${last.location.city}` : null;
+    if (last && key !== null && key === lastKey) {
+      last.days.push(day);
+    } else {
+      groups.push({ location: loc, days: [day] });
+    }
+  }
+  return groups;
+}
+
 export default function TripTimelinePage({ params }: PageProps) {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
@@ -177,17 +198,46 @@ export default function TripTimelinePage({ params }: PageProps) {
             <p className="text-[#8b8b8b] text-sm">Nenhum item na timeline ainda.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {timeline.days.map((day) => (
+          <div className="space-y-6">
+            {groupDaysByLocation(timeline.days).map((group, groupIdx) => (
+              <div key={groupIdx} className="space-y-4">
+                {group.location && (
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="text-base">📍</span>
+                    <span className="text-sm font-semibold text-[#242424]">
+                      {group.location.city}, {group.location.country}
+                    </span>
+                    <span className="text-xs text-[#8b8b8b]">
+                      — {group.days.length === 1
+                        ? `Dia ${group.days[0].day_number}`
+                        : `Dias ${group.days[0].day_number}–${group.days[group.days.length - 1].day_number}`}
+                    </span>
+                  </div>
+                )}
+                {group.days.map((day) => (
               <article
                 key={day.id}
                 className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] overflow-hidden"
               >
                 {/* Day header */}
-                <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-[#ff6b6b] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-                      {day.day_number}
+                <div className="bg-[#fafafa] border-b border-[rgba(0,0,0,0.08)] px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold text-[#ff6b6b] uppercase tracking-wider bg-[#fff0f0] px-2 py-0.5 rounded-md">
+                        Dia {day.day_number}
+                      </span>
+                      {(() => {
+                        const label = day.location
+                          ? `${day.location.city}, ${day.location.country}`
+                          : Array.from(new Set(day.activities.map(a => a.location).filter((l): l is string => !!l))).slice(0, 3).join(" · ");
+                      
+                        return label ? (
+                          <span className="text-xs font-medium text-[#8b8b8b] flex items-center gap-1">
+                            <span className="w-1 h-1 rounded-full bg-[rgba(0,0,0,0.15)] mx-1"></span>
+                            {label}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                     <h2 className="font-semibold text-[#242424] text-lg">{getDayLabel(day.day_number, trip?.start_date, day.date)}</h2>
                   </div>
@@ -209,9 +259,17 @@ export default function TripTimelinePage({ params }: PageProps) {
                             className="flex items-center justify-between gap-2 rounded-lg bg-[#fff9f6] px-3 py-2 text-sm"
                           >
                             <span className="font-medium text-[#242424]">{activity.title}</span>
-                            <span className="text-xs text-[#8b8b8b] capitalize px-2 py-0.5 bg-white rounded-full border border-[rgba(0,0,0,0.08)]">
-                              {activity.status}
-                            </span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {activity.location_detail ? (
+                                <span className="text-xs text-[#8b8b8b] flex items-center gap-0.5">
+                                  📍 {activity.location_detail.place_name || activity.location_detail.city}
+                                </span>
+                              ) : activity.location ? (
+                                <span className="text-xs text-[#8b8b8b] truncate max-w-[120px]">
+                                  {activity.location}
+                                </span>
+                              ) : null}
+                            </div>
                           </li>
                         ))
                       )}
@@ -319,6 +377,8 @@ export default function TripTimelinePage({ params }: PageProps) {
                   </div>
                 </div>
               </article>
+                ))}
+              </div>
             ))}
           </div>
         )}

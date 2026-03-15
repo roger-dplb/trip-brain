@@ -472,8 +472,9 @@ def _build_itinerary_prompt_worker(
             '      "day_number": 1,',
             '      "date": "YYYY-MM-DD ou null",',
             '      "notes": "resumo do dia em 1-2 frases ou null",',
+            '      "location": {"country": "País", "city": "Cidade", "region": "Bairro/região ou null", "place_name": "Local específico ou null"},',
             '      "activities": [',
-            '        {"title": "nome da atividade", "location": "local ou null", "notes": "dica ou null"}',
+            '        {"title": "nome da atividade", "location": {"country": "País", "city": "Cidade", "region": "Bairro ou null", "place_name": "Local ou null"}, "notes": "dica ou null"}',
             "      ]",
             "    }",
             "  ]",
@@ -485,6 +486,8 @@ def _build_itinerary_prompt_worker(
             "- Não invente atrações muito específicas se não houver contexto",
             "- Use os dados da viagem abaixo como base",
             "- Se já existem atividades planejadas, inclua-as e complemente",
+            "- Cada dia e cada atividade deve ter um objeto 'location' com country e city sempre preenchidos",
+            "- Use null para region e place_name quando não houver informação específica",
             "",
             f"Viagem: {trip_name}",
             f"Destinos: {dest_str}",
@@ -538,6 +541,38 @@ def _persist_itinerary_worker(
                 )
             days_created += 1
 
+        # Persist day-level location
+        day_loc_data = day_data.get("location")
+        day_country = day_city = None
+        if isinstance(day_loc_data, dict):
+            day_country = (day_loc_data.get("country") or "").strip() or None
+            day_city = (day_loc_data.get("city") or "").strip() or None
+        if day_country and day_city:
+            day_loc_id = uuid.uuid4()
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO locations (id, trip_id, country, city, region, place_name, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                    """,
+                    (
+                        day_loc_id,
+                        trip_id,
+                        day_country,
+                        day_city,
+                        (day_loc_data.get("region") or "").strip() or None,
+                        (day_loc_data.get("place_name") or "").strip() or None,
+                    ),
+                )
+                cursor.execute(
+                    "UPDATE days SET location_id = %s WHERE id = %s",
+                    (day_loc_id, day_id),
+                )
+        else:
+            print(
+                f"[worker] Day {day_number}: missing country/city in location, skipping location insert"
+            )
+
         for act in day_data.get("activities", []):
             title = (act.get("title") or "").strip()
             if not title:
@@ -553,18 +588,58 @@ def _persist_itinerary_worker(
             if existing_act:
                 continue
 
+            # Build free-text location and structured location ID
+            act_loc_data = act.get("location")
+            act_location_text = None
+            act_loc_id = None
+            if isinstance(act_loc_data, dict):
+                act_country = (act_loc_data.get("country") or "").strip() or None
+                act_city = (act_loc_data.get("city") or "").strip() or None
+                act_place_name = (act_loc_data.get("place_name") or "").strip() or None
+                if act_place_name:
+                    act_location_text = act_place_name
+                elif act_city and act_country:
+                    act_location_text = f"{act_city}, {act_country}"
+                elif act_city:
+                    act_location_text = act_city
+                # Only create a location record when country or city differs from the day
+                if (
+                    act_country
+                    and act_city
+                    and (act_country != day_country or act_city != day_city)
+                ):
+                    act_loc_id = uuid.uuid4()
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            """
+                            INSERT INTO locations (id, trip_id, country, city, region, place_name, created_at)
+                            VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                            """,
+                            (
+                                act_loc_id,
+                                trip_id,
+                                act_country,
+                                act_city,
+                                (act_loc_data.get("region") or "").strip() or None,
+                                (act_loc_data.get("place_name") or "").strip() or None,
+                            ),
+                        )
+            elif isinstance(act_loc_data, str):
+                act_location_text = act_loc_data or None
+
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO activities (id, day_id, title, location, notes, status, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, 'planned', NOW(), NOW())
+                    INSERT INTO activities (id, day_id, title, location, notes, status, location_id, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, 'planned', %s, NOW(), NOW())
                     """,
                     (
                         uuid.uuid4(),
                         day_id,
                         title,
-                        act.get("location") or None,
+                        act_location_text,
                         act.get("notes") or None,
+                        act_loc_id,
                     ),
                 )
             activities_created += 1
