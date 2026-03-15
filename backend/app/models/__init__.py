@@ -6,4 +6,12 @@ from app.models.memory import Memory
 from app.models.story_export_job import StoryExportJob  # noqa: F401
 from app.models.trip import Trip
 
-__all__ = ["Trip", "Day", "Activity", "Memory", "Embedding", "StoryExportJob", "Location"]
+__all__ = [
+    "Trip",
+    "Day",
+    "Activity",
+    "Memory",
+    "Embedding",
+    "StoryExportJob",
+    "Location",
+]
