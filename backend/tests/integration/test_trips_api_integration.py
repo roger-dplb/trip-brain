@@ -65,3 +65,31 @@ def test_trip_timeline_returns_empty_days_for_new_trip(client) -> None:
     payload = timeline_response.json()
     assert payload["trip_id"] == trip_id
     assert payload["days"] == []
+
+
+def test_cover_image_url_is_returned_in_trip_response(client) -> None:
+    create_response = client.post(
+        "/api/v1/trips/",
+        json={
+            "name": "Cover Test",
+            "destinations": ["Lisboa, Portugal"],
+            "start_date": "2026-08-01",
+            "end_date": "2026-08-10",
+            "status": "planned",
+        },
+    )
+    assert create_response.status_code == 201
+    trip_id = create_response.json()["id"]
+
+    # Initially null
+    get_response = client.get(f"/api/v1/trips/{trip_id}")
+    assert get_response.status_code == 200
+    assert get_response.json()["cover_image_url"] is None
+
+    # Update cover
+    put_response = client.put(
+        f"/api/v1/trips/{trip_id}",
+        json={"cover_image_url": "https://example.com/cover.jpg"},
+    )
+    assert put_response.status_code == 200
+    assert put_response.json()["cover_image_url"] == "https://example.com/cover.jpg"

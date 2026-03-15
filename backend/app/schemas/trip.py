@@ -33,6 +33,7 @@ class TripUpdate(BaseModel):
     start_date: date | None = None
     end_date: date | None = None
     summary: str | None = None
+    cover_image_url: str | None = None
     status: str | None = None
 
     @field_validator("destinations")
@@ -49,5 +50,6 @@ class TripRead(TripBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    cover_image_url: str | None = None
     created_at: datetime
     updated_at: datetime

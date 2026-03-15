@@ -21,6 +21,7 @@ class Trip(Base):
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cover_image_url: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="planning")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
