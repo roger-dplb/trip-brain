@@ -49,10 +49,13 @@ def create_upload_url(
         content_type=payload.content_type,
     )
 
+    public_url = storage_service.build_public_object_url(object_key)
+
     return UploadPresignResponse(
         object_key=object_key,
         upload_url=upload_url,
         expires_in=storage_service.expires_in_seconds,
+        public_url=public_url or "",
     )
 
 

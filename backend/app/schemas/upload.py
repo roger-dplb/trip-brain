@@ -17,6 +17,7 @@ class UploadPresignResponse(BaseModel):
     object_key: str
     upload_url: str
     expires_in: int
+    public_url: str
 
 
 class UploadCompleteRequest(BaseModel):
