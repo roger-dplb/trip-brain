@@ -15,7 +15,9 @@ import {
   fetchTrip,
   updateActivity,
   updateDay,
+  updateTrip,
 } from "@/lib/api";
+import { CoverImageModal } from "@/components/CoverImageModal";
 import { getDayLabel, formatDate } from "@/lib/utils";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -178,6 +180,7 @@ export default function TripDetailsPage({ params }: PageProps) {
   const [addDayMode, setAddDayMode] = useState<"simple" | "select-date" | "extend">("simple");
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [selectedAvailableDate, setSelectedAvailableDate] = useState("");
+  const [showCoverModal, setShowCoverModal] = useState(false);
 
   const orderedDays = useMemo(
     () => [...days].sort((a, b) => a.day_number - b.day_number),
@@ -363,8 +366,29 @@ export default function TripDetailsPage({ params }: PageProps) {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative h-[240px] sm:h-[280px] bg-gradient-to-br from-[#ff6b6b] via-[#ff8c69] to-[#f3905a] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      <div
+        className="relative h-[240px] sm:h-[280px] overflow-hidden"
+        style={
+          trip.cover_image_url
+            ? { backgroundImage: `url(${trip.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : undefined
+        }
+      >
+        {/* Gradient: coral when no cover, dark overlay when cover exists */}
+        <div
+          className={
+            trip.cover_image_url
+              ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10"
+              : "absolute inset-0 bg-gradient-to-br from-[#ff6b6b] via-[#ff8c69] to-[#f3905a]"
+          }
+        />
+        {/* Alterar capa button */}
+        <button
+          onClick={() => setShowCoverModal(true)}
+          className="absolute top-3 right-4 sm:top-4 sm:right-8 z-10 flex items-center gap-1.5 rounded-lg bg-black/30 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
+        >
+          ✏️ Alterar capa
+        </button>
         <div className="absolute bottom-6 sm:bottom-10 left-4 sm:left-8 lg:left-12 right-4 sm:right-8 lg:right-12">
           {trip.destinations.length > 0 && (
             <span className="inline-flex items-center gap-1.5 bg-[#ff6b6b] px-3 py-1.5 rounded-full text-white text-xs sm:text-sm font-semibold mb-3">
@@ -710,6 +734,16 @@ export default function TripDetailsPage({ params }: PageProps) {
           )}
         </div>
       </div>
+      {showCoverModal && (
+        <CoverImageModal
+          tripId={params.tripId}
+          onClose={() => setShowCoverModal(false)}
+          onCoverUpdated={(url: string) => {
+            setTrip((prev) => prev ? { ...prev, cover_image_url: url } : prev);
+            setShowCoverModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
