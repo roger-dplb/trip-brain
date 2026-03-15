@@ -75,6 +75,7 @@ def run() -> None:
     openai_embedding_model = os.getenv(
         "OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
     )
+    caption_model = os.getenv("CAPTION_MODEL", "gpt-4.1-mini")
     openai_client = OpenAI(api_key=openai_api_key)
 
     storage_client, bucket = _build_storage_client()
@@ -105,6 +106,7 @@ def run() -> None:
                 bucket=bucket,
                 openai_client=openai_client,
                 openai_embedding_model=openai_embedding_model,
+                caption_model=caption_model,
                 limit=consume_batch_size,
                 backoff_base_seconds=backoff_base_seconds,
             )
@@ -349,6 +351,7 @@ def _consume_pending_jobs(
     bucket: str,
     openai_client: OpenAI,
     openai_embedding_model: str,
+    caption_model: str,
     limit: int,
     backoff_base_seconds: int,
 ) -> int:
@@ -404,6 +407,7 @@ def _consume_pending_jobs(
                     bucket=bucket,
                     openai_client=openai_client,
                     openai_embedding_model=openai_embedding_model,
+                    caption_model=caption_model,
                     job_type=job_type,
                     source_type=source_type,
                     source_id=source_id,
@@ -653,7 +657,7 @@ def _run_itinerary_generation(
     source_id: uuid.UUID,
     payload: dict,
 ) -> dict:
-    itinerary_model = os.getenv("ITINERARY_MODEL", "gpt-5.4")
+    itinerary_model = os.getenv("ITINERARY_MODEL", "gpt-4o")
     preferences = payload.get("preferences")
     max_days = int(payload.get("max_days") or 7)
 
@@ -754,6 +758,7 @@ def _dispatch_job(
     bucket: str,
     openai_client: OpenAI,
     openai_embedding_model: str,
+    caption_model: str,
     job_type: str,
     source_type: str,
     source_id: uuid.UUID,
@@ -834,7 +839,7 @@ def _dispatch_job(
             storage_client=storage_client,
             bucket=bucket,
             openai_client=openai_client,
-            openai_model=openai_embedding_model,
+            openai_model=caption_model,
             minio_public_endpoint=os.getenv(
                 "MINIO_PUBLIC_ENDPOINT",
                 os.getenv("MINIO_ENDPOINT", "http://minio:9000"),

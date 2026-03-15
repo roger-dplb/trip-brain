@@ -8,7 +8,7 @@ from openai import OpenAI
 def generate_day_caption(
     openai_client: OpenAI,
     day: Any,
-    openai_model: str = "gpt-4o-mini",
+    openai_model: str = "gpt-4.1",
 ) -> str:
     """
     Generate a short, evocative one-sentence caption for a trip day.

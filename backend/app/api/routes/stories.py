@@ -32,7 +32,7 @@ def _enqueue_worker_job(
             VALUES (
                 gen_random_uuid(), :job_type, 'trip', :source_id,
                 'pending', 0, 3,
-                now(), :payload::jsonb, 'stories', now()
+                now(), CAST(:payload AS jsonb), 'stories', now()
             )
             ON CONFLICT (job_type, source_type, source_id)
             DO UPDATE SET
