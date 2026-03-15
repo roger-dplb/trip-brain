@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -51,11 +51,17 @@ def create_upload_url(
 
     public_url = storage_service.build_public_object_url(object_key)
 
+    if not public_url:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Storage misconfiguration: could not build public URL for object.",
+        )
+
     return UploadPresignResponse(
         object_key=object_key,
         upload_url=upload_url,
         expires_in=storage_service.expires_in_seconds,
-        public_url=public_url or "",
+        public_url=public_url,
     )
 
 

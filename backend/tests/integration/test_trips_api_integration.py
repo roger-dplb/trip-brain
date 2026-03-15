@@ -75,7 +75,7 @@ def test_cover_image_url_is_returned_in_trip_response(client) -> None:
             "destinations": ["Lisboa, Portugal"],
             "start_date": "2026-08-01",
             "end_date": "2026-08-10",
-            "status": "planned",
+            "status": "planning",
         },
     )
     assert create_response.status_code == 201
