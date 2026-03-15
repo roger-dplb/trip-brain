@@ -39,6 +39,13 @@ export function CoverImageModal({ tripId, onClose, onCoverUpdated }: Props) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  // Revoke preview object URL on unmount or when preview changes
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
   // Load memories when tab switches
   useEffect(() => {
     if (tab !== "memories") return;
@@ -161,7 +168,12 @@ export function CoverImageModal({ tripId, onClose, onCoverUpdated }: Props) {
                     className="w-full h-48 object-cover rounded-xl"
                   />
                   <button
-                    onClick={() => { setFile(null); setPreview(null); setUploadError(null); }}
+                    onClick={() => {
+                      if (preview) URL.revokeObjectURL(preview);
+                      setFile(null);
+                      setPreview(null);
+                      setUploadError(null);
+                    }}
                     className="absolute top-2 right-2 bg-black/40 text-white rounded-full px-2 py-0.5 text-xs hover:bg-black/60"
                   >
                     Trocar
@@ -205,7 +217,7 @@ export function CoverImageModal({ tripId, onClose, onCoverUpdated }: Props) {
                   Sem fotos nas memórias desta viagem. Adicione fotos na aba Memórias ou faça upload direto.
                 </p>
               )}
-              {!memoriesLoading && memories.length > 0 && (
+              {!memoriesLoading && !memoriesError && memories.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                   {memories.map((m) => (
                     <button
