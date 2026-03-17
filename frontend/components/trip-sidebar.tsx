@@ -112,6 +112,23 @@ function Film() {
   );
 }
 
+function ChatBubble() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
 function ArrowLeft() {
   return (
     <svg
@@ -162,6 +179,7 @@ export function TripSidebar({ trip, tripId, isOpen = false, onClose }: Props) {
     { href: `/trips/${tripId}/timeline`, label: "Timeline", icon: <BarChart /> },
     { href: `/trips/${tripId}/memories`, label: "Memórias", icon: <Camera /> },
     { href: `/trips/${tripId}/stories`, label: "Stories", icon: <Film /> },
+    { href: `/trips/${tripId}/chat`, label: "Chat", icon: <ChatBubble /> },
   ];
 
   return (

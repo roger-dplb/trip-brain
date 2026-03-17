@@ -19,6 +19,8 @@ from app.repositories.embedding_repository import EmbeddingRepository
 from app.schemas.activity import ActivityCreate
 from app.schemas.day import DayCreate
 from app.schemas.rag import (
+    ChatMessage,
+    ChatResponse,
     ItineraryJobEnqueuedResponse,
     SemanticQueryMatch,
     SemanticQueryResponse,
@@ -76,6 +78,79 @@ class RagService:
             used_context=True,
             matches=matches,
         )
+
+    def chat_with_trip(
+        self,
+        trip_id: uuid.UUID,
+        message: str,
+        history: list[ChatMessage],
+    ) -> ChatResponse:
+        trip = self.db.query(Trip).filter(Trip.id == trip_id).first()
+        if not trip:
+            raise HTTPException(status_code=404, detail="Viagem não encontrada")
+
+        self._sync_trip_embeddings(trip_id)
+
+        allowed_sources = self._allowed_sources_for_trip(trip_id)
+        query_embedding = self._embed_text(message)
+        results = self.embedding_repository.search_top_k(
+            query_embedding=query_embedding,
+            top_k=8,
+            allowed_sources=allowed_sources,
+        )
+
+        context_snippets = [embedding.content for embedding, _ in results]
+        used_context = bool(context_snippets)
+
+        destinations = (
+            ", ".join(trip.destinations)
+            if trip.destinations
+            else "destino não informado"
+        )
+        period = (
+            f"{trip.start_date} até {trip.end_date}"
+            if trip.start_date and trip.end_date
+            else "período não informado"
+        )
+
+        system_prompt = "\n".join(
+            [
+                "Você é um assistente de viagens inteligente e amigável para o TripBrain.",
+                "Responda de forma conversacional, concisa e útil, sempre em português.",
+                "Use o contexto da viagem abaixo para personalizar suas respostas.",
+                "",
+                f"Viagem: {trip.name}",
+                f"Destinos: {destinations}",
+                f"Período: {period}",
+            ]
+        )
+
+        if trip.summary:
+            system_prompt += f"\nResumo: {trip.summary}"
+
+        if context_snippets:
+            system_prompt += "\n\nContexto relevante desta viagem:\n" + "\n".join(
+                f"- {snippet}" for snippet in context_snippets
+            )
+        else:
+            system_prompt += (
+                "\n\nAinda não há atividades ou memórias registradas nesta viagem. "
+                "Responda com base nas informações gerais disponíveis."
+            )
+
+        openai_messages = [{"role": "system", "content": system_prompt}]
+        for msg in history[-20:]:  # cap at 20 prior messages
+            openai_messages.append({"role": msg.role, "content": msg.content})
+        openai_messages.append({"role": "user", "content": message})
+
+        response = self.openai_client.chat.completions.create(
+            model=settings.chat_model,
+            messages=openai_messages,
+        )
+
+        answer = response.choices[0].message.content or ""
+
+        return ChatResponse(answer=answer.strip(), used_context=used_context)
 
     def enqueue_itinerary_generation(
         self,

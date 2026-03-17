@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.rag import (
+    ChatRequest,
+    ChatResponse,
     ItineraryGenerationRequest,
     ItineraryJobEnqueuedResponse,
     SemanticQueryRequest,
@@ -26,6 +28,18 @@ def semantic_query(
         trip_id=payload.trip_id,
         query=payload.query,
         top_k=payload.top_k,
+    )
+
+
+@router.post("/chat", response_model=ChatResponse)
+def chat(
+    payload: ChatRequest,
+    service: RagService = Depends(get_service),
+):
+    return service.chat_with_trip(
+        trip_id=payload.trip_id,
+        message=payload.message,
+        history=payload.history,
     )
 
 

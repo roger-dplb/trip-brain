@@ -21,8 +21,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
     itinerary_provider: str = "openai"
-    itinerary_model: str = "gpt-4o"
+    itinerary_model: str = "gpt-5-mini-2025-08-07"
     itinerary_prompt_strategy: str = "summary-first-day-by-day"
+    chat_model: str = "gpt-5-mini-2025-08-07"
     couple_auth_enabled: bool = False
     couple_primary_name: str = "partner_a"
     couple_primary_token: str = ""

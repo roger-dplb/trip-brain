@@ -379,6 +379,16 @@ export type ItineraryJobEnqueuedResponse = {
   trip_status: string;
 };
 
+export type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type ChatResponse = {
+  answer: string;
+  used_context: boolean;
+};
+
 export function generateItinerary(payload: {
   trip_id: string;
   preferences?: string;
@@ -390,6 +400,22 @@ export function generateItinerary(payload: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+    },
+    API_BASE_PUBLIC,
+  );
+}
+
+export function chatWithTrip(
+  tripId: string,
+  message: string,
+  history: ChatMessage[],
+): Promise<ChatResponse> {
+  return request<ChatResponse>(
+    "/rag/chat",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trip_id: tripId, message, history }),
     },
     API_BASE_PUBLIC,
   );

@@ -32,3 +32,19 @@ class ItineraryJobEnqueuedResponse(BaseModel):
     trip_id: uuid.UUID
     job_id: str
     trip_status: str
+
+
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+
+class ChatRequest(BaseModel):
+    trip_id: uuid.UUID
+    message: str = Field(min_length=1, max_length=2000)
+    history: list[ChatMessage] = Field(default_factory=list, max_length=50)
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    used_context: bool
