@@ -33,3 +33,29 @@ class UploadCompleteRequest(BaseModel):
 class UploadCompleteResponse(BaseModel):
     memory_id: uuid.UUID
     object_key: str
+
+
+class ImportPresignRequest(BaseModel):
+    session_id: str | None = None
+    filename: str
+    content_type: str
+    file_size_bytes: int
+
+
+class ImportPresignResponse(BaseModel):
+    session_id: str
+    object_key: str
+    upload_url: str
+    expires_in: int
+    public_url: str
+
+
+class TripImportRequest(BaseModel):
+    session_id: str
+    object_keys: list[str]
+
+
+class TripImportResponse(BaseModel):
+    trip_id: uuid.UUID
+    job_id: uuid.UUID
+    trip_status: str

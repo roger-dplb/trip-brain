@@ -8,7 +8,8 @@ import { useState } from "react";
 
 export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: string | number) => void }) {
   const [showConfirm, setShowConfirm] = useState(false);
-  const isGenerating = trip.status === "generating_itinerary";
+  const isGenerating = trip.status === "generating_itinerary" || trip.status === "importing_from_photos";
+  const importingFromPhotos = trip.status === "importing_from_photos";
   const timeStatus = isGenerating ? null : getTripTimeStatus(trip.start_date, trip.end_date);
 
   const cardContent = (
@@ -65,8 +66,8 @@ export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: strin
             <path d="M21 12a9 9 0 1 1-6.219-8.56" />
           </svg>
           <span className="text-xs font-medium text-[#ff6b6b]">
-            Gerando o melhor roteiro da sua vida...
-          </span>
+              {importingFromPhotos ? "Analisando suas fotos..." : "Gerando o melhor roteiro da sua vida..."}
+            </span>
         </div>
       )}
       {trip.status === "itinerary_failed" && (
@@ -77,6 +78,16 @@ export function TripCard({ trip, onDelete }: { trip: Trip; onDelete?: (id: strin
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <span className="text-xs text-red-600">Falha ao gerar roteiro.</span>
+        </div>
+      )}
+      {trip.status === "import_failed" && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-red-500">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span className="text-xs text-red-600">Falha ao importar fotos.</span>
         </div>
       )}
       <div className={`mt-3 flex items-center ${timeStatus ? "justify-between" : "justify-end"}`}>

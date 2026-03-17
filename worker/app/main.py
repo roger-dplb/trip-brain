@@ -16,6 +16,7 @@ JOB_TYPE_EMBEDDING = "embedding_generation"
 JOB_TYPE_THUMBNAIL = "thumbnail_generation"
 JOB_TYPE_ITINERARY = "itinerary_generation"
 JOB_TYPE_STORIES_EXPORT = "stories_export"
+JOB_TYPE_TRIP_IMPORT = "trip_import"
 
 
 def _ensure_production_secure_settings() -> None:
@@ -76,6 +77,7 @@ def run() -> None:
         "OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
     )
     caption_model = os.getenv("CAPTION_MODEL", "gpt-4.1-mini")
+    import_model = os.getenv("IMPORT_VISION_MODEL", "gpt-4o")
     openai_client = OpenAI(api_key=openai_api_key)
 
     storage_client, bucket = _build_storage_client()
@@ -107,6 +109,7 @@ def run() -> None:
                 openai_client=openai_client,
                 openai_embedding_model=openai_embedding_model,
                 caption_model=caption_model,
+                import_model=import_model,
                 limit=consume_batch_size,
                 backoff_base_seconds=backoff_base_seconds,
             )
@@ -352,6 +355,7 @@ def _consume_pending_jobs(
     openai_client: OpenAI,
     openai_embedding_model: str,
     caption_model: str,
+    import_model: str,
     limit: int,
     backoff_base_seconds: int,
 ) -> int:
@@ -408,6 +412,7 @@ def _consume_pending_jobs(
                     openai_client=openai_client,
                     openai_embedding_model=openai_embedding_model,
                     caption_model=caption_model,
+                    import_model=import_model,
                     job_type=job_type,
                     source_type=source_type,
                     source_id=source_id,
@@ -759,6 +764,7 @@ def _dispatch_job(
     openai_client: OpenAI,
     openai_embedding_model: str,
     caption_model: str,
+    import_model: str,
     job_type: str,
     source_type: str,
     source_id: uuid.UUID,
@@ -840,6 +846,23 @@ def _dispatch_job(
             bucket=bucket,
             openai_client=openai_client,
             openai_model=caption_model,
+            minio_public_endpoint=os.getenv(
+                "MINIO_PUBLIC_ENDPOINT",
+                os.getenv("MINIO_ENDPOINT", "http://minio:9000"),
+            ),
+        )
+
+    if job_type == JOB_TYPE_TRIP_IMPORT:
+        from app.import_trip.processor import process_trip_import
+
+        return process_trip_import(
+            trip_id=source_id,
+            object_keys=list(payload.get("object_keys") or []),
+            database_url=_normalize_database_url(os.getenv("DATABASE_URL", "")),
+            storage_client=storage_client,
+            bucket=bucket,
+            openai_client=openai_client,
+            vision_model=import_model,
             minio_public_endpoint=os.getenv(
                 "MINIO_PUBLIC_ENDPOINT",
                 os.getenv("MINIO_ENDPOINT", "http://minio:9000"),
@@ -988,6 +1011,12 @@ def _handle_job_failure(
             with connection.cursor() as cursor:
                 cursor.execute(
                     "UPDATE trips SET status = 'itinerary_failed', updated_at = NOW() WHERE id = %s",
+                    (source_id,),
+                )
+        if job_type == JOB_TYPE_TRIP_IMPORT:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE trips SET status = 'import_failed', updated_at = NOW() WHERE id = %s",
                     (source_id,),
                 )
         _log(

@@ -24,6 +24,24 @@ function HeartSolid() {
   );
 }
 
+function CameraIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
 function PlusIcon() {
   return (
     <svg
@@ -75,14 +93,18 @@ export default function TripsPage() {
   }, [router]);
 
   useEffect(() => {
-    const hasGenerating = trips.some((t) => t.status === "generating_itinerary");
+    const hasGenerating = trips.some(
+      (t) => t.status === "generating_itinerary" || t.status === "importing_from_photos",
+    );
     if (!hasGenerating) return;
 
     const interval = setInterval(async () => {
       try {
         const updated = await fetchTrips();
         setTrips(updated);
-        const stillGenerating = updated.some((t) => t.status === "generating_itinerary");
+        const stillGenerating = updated.some(
+          (t) => t.status === "generating_itinerary" || t.status === "importing_from_photos",
+        );
         if (!stillGenerating) clearInterval(interval);
       } catch {
         // silently ignore polling errors
@@ -119,6 +141,15 @@ export default function TripsPage() {
             <span className="text-lg sm:text-xl font-bold text-[#ff6b6b]">Roger e Ana</span>
           </div>
           <div className="flex w-full sm:w-auto items-center justify-end gap-2 sm:gap-3">
+            <Link href="/trips/import">
+              <button
+                type="button"
+                className="flex items-center gap-1.5 rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm text-[#8b8b8b] hover:text-[#242424] transition-colors"
+              >
+                <CameraIcon />
+                Importar de fotos
+              </button>
+            </Link>
             <Link href="/trips/new">
               <Button>
                 <PlusIcon />

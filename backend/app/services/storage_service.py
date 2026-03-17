@@ -46,6 +46,11 @@ class StorageService:
             f"{uuid.uuid4()}{safe_extension}"
         )
 
+    def generate_import_object_key(self, session_id: str, filename: str) -> str:
+        extension = Path(filename).suffix
+        safe_extension = extension if extension else ""
+        return f"imports/{session_id}/{uuid.uuid4()}{safe_extension}"
+
     def create_presigned_upload_url(self, object_key: str, content_type: str) -> str:
         internal_url = self.client.generate_presigned_url(
             ClientMethod="put_object",

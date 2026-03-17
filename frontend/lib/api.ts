@@ -441,6 +441,52 @@ export function completeUpload(payload: {
   );
 }
 
+export type TripImportResponse = {
+  trip_id: string;
+  job_id: string;
+  trip_status: string;
+};
+
+export type ImportPresignResponse = {
+  session_id: string;
+  object_key: string;
+  upload_url: string;
+  expires_in: number;
+  public_url: string;
+};
+
+export function createImportPresign(payload: {
+  session_id?: string;
+  filename: string;
+  content_type: string;
+  file_size_bytes: number;
+}): Promise<ImportPresignResponse> {
+  return request<ImportPresignResponse>(
+    "/uploads/import-presign",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+    API_BASE_PUBLIC,
+  );
+}
+
+export function importTripFromPhotos(payload: {
+  session_id: string;
+  object_keys: string[];
+}): Promise<TripImportResponse> {
+  return request<TripImportResponse>(
+    "/trips/import-from-photos",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+    API_BASE_PUBLIC,
+  );
+}
+
 export function triggerStoriesExport(tripId: string): Promise<StoryExportJob> {
   return request<StoryExportJob>(
     `/trips/${tripId}/stories/export`,

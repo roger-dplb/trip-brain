@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -7,6 +8,7 @@ from app.db.session import get_db
 from app.models.activity import Activity
 from app.models.day import Day
 from app.models.location import Location
+from app.models.trip import Trip
 from app.repositories.activity_repository import ActivityRepository
 from app.repositories.day_repository import DayRepository
 from app.repositories.memory_repository import MemoryRepository
@@ -19,6 +21,8 @@ from app.schemas.timeline import (
     TripTimelineRead,
 )
 from app.schemas.trip import TripCreate, TripRead, TripUpdate
+from app.schemas.upload import TripImportRequest, TripImportResponse
+from app.services.import_service import enqueue_trip_import
 from app.services.storage_service import StorageService
 from app.services.trip_service import TripService
 
@@ -211,3 +215,40 @@ def patch_activity_location(
     db.commit()
     db.refresh(loc)
     return LocationResponse.model_validate(loc)
+
+
+@router.post(
+    "/import-from-photos",
+    response_model=TripImportResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def import_trip_from_photos(
+    payload: TripImportRequest,
+    db: Session = Depends(get_db),
+):
+    if not payload.object_keys:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="object_keys must not be empty",
+        )
+
+    trip = Trip(
+        name="Viagem importada",
+        destinations=[],
+        start_date=date.today(),
+        end_date=date.today(),
+        status="importing_from_photos",
+        summary=None,
+    )
+    db.add(trip)
+    db.flush()
+
+    job_id = enqueue_trip_import(db, trip.id, payload.object_keys)
+
+    db.refresh(trip)
+
+    return TripImportResponse(
+        trip_id=trip.id,
+        job_id=job_id,
+        trip_status="importing_from_photos",
+    )

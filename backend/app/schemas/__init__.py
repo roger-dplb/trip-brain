@@ -18,6 +18,10 @@ from app.schemas.stories import (
 from app.schemas.timeline import TripTimelineRead
 from app.schemas.trip import TripCreate, TripRead, TripUpdate
 from app.schemas.upload import (
+    ImportPresignRequest,
+    ImportPresignResponse,
+    TripImportRequest,
+    TripImportResponse,
     UploadCompleteRequest,
     UploadCompleteResponse,
     UploadPresignRequest,
@@ -53,4 +57,8 @@ __all__ = [
     "UploadPresignResponse",
     "UploadCompleteRequest",
     "UploadCompleteResponse",
+    "ImportPresignRequest",
+    "ImportPresignResponse",
+    "TripImportRequest",
+    "TripImportResponse",
 ]

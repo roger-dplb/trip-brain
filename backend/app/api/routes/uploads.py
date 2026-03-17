@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -5,6 +7,8 @@ from app.db.session import get_db
 from app.repositories.memory_repository import MemoryRepository
 from app.schemas.memory import MemoryCreate
 from app.schemas.upload import (
+    ImportPresignRequest,
+    ImportPresignResponse,
     UploadCompleteRequest,
     UploadCompleteResponse,
     UploadPresignRequest,
@@ -14,6 +18,8 @@ from app.services.memory_service import MemoryService
 from app.services.storage_service import StorageService
 
 router = APIRouter()
+
+_IMPORT_ALLOWED_CONTENT_TYPES = frozenset({"image/jpeg", "image/png", "image/webp"})
 
 
 def get_memory_service(db: Session = Depends(get_db)) -> MemoryService:
@@ -87,3 +93,54 @@ def complete_upload(
     )
 
     return UploadCompleteResponse(memory_id=memory.id, object_key=payload.object_key)
+
+
+@router.post(
+    "/import-presign",
+    response_model=ImportPresignResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_import_upload_url(
+    payload: ImportPresignRequest,
+    storage_service: StorageService = Depends(get_storage_service),
+):
+    if payload.content_type not in _IMPORT_ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "Invalid content_type for import. Allowed values: "
+                f"{sorted(_IMPORT_ALLOWED_CONTENT_TYPES)}"
+            ),
+        )
+
+    storage_service.validate_upload_request(
+        content_type=payload.content_type,
+        file_size_bytes=payload.file_size_bytes,
+    )
+
+    session_id = payload.session_id or str(uuid.uuid4())
+
+    object_key = storage_service.generate_import_object_key(
+        session_id=session_id,
+        filename=payload.filename,
+    )
+    upload_url = storage_service.create_presigned_upload_url(
+        object_key=object_key,
+        content_type=payload.content_type,
+    )
+
+    public_url = storage_service.build_public_object_url(object_key)
+
+    if not public_url:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Storage misconfiguration: could not build public URL for object.",
+        )
+
+    return ImportPresignResponse(
+        session_id=session_id,
+        object_key=object_key,
+        upload_url=upload_url,
+        expires_in=storage_service.expires_in_seconds,
+        public_url=public_url,
+    )
