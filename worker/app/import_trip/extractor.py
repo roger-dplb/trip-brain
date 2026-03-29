@@ -6,7 +6,7 @@ from PIL import Image
 EXIF_TAG_DATETIME_ORIGINAL = 36867
 EXIF_TAG_GPS_INFO = 34853
 EXIF_TAG_EXIF_IFD = 34665  # pointer to ExifIFD sub-IFD
-EXIF_TAG_DATETIME = 306    # fallback: DateTime in main IFD
+EXIF_TAG_DATETIME = 306  # fallback: DateTime in main IFD
 
 
 def _dms_to_decimal(dms, ref):
@@ -35,7 +35,7 @@ def extract_photo_metadata(image_bytes):
 
         # DateTimeOriginal (tag 36867) — lives in ExifIFD sub-IFD on most cameras
         exif_ifd = exif_data.get_ifd(EXIF_TAG_EXIF_IFD)
-        datetime_str = (exif_ifd.get(EXIF_TAG_DATETIME_ORIGINAL) if exif_ifd else None)
+        datetime_str = exif_ifd.get(EXIF_TAG_DATETIME_ORIGINAL) if exif_ifd else None
         # Fallback 1: some Pillow versions flatten the ExifIFD into the main dict
         if not datetime_str:
             datetime_str = exif_data.get(EXIF_TAG_DATETIME_ORIGINAL)

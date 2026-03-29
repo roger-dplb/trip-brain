@@ -24,10 +24,12 @@ def describe_activity_from_photos(openai_client, model, photo_bytes_list):
         ]
         for img_bytes in photo_bytes_list[:3]:
             b64 = base64.b64encode(img_bytes).decode("utf-8")
-            content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{b64}"},
-            })
+            content.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{b64}"},
+                }
+            )
 
         response = openai_client.chat.completions.create(
             model=model,
