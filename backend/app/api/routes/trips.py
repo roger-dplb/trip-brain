@@ -21,8 +21,8 @@ from app.schemas.timeline import (
     TripTimelineRead,
 )
 from app.schemas.trip import TripCreate, TripRead, TripUpdate
-from app.schemas.upload import TripImportRequest, TripImportResponse
-from app.services.import_service import enqueue_trip_import
+from app.schemas.upload import TripAddMediaRequest, TripAddMediaResponse, TripImportRequest, TripImportResponse
+from app.services.import_service import enqueue_trip_import, enqueue_trip_media_add
 from app.services.storage_service import StorageService
 from app.services.trip_service import TripService
 
@@ -252,3 +252,27 @@ def import_trip_from_photos(
         job_id=job_id,
         trip_status="importing_from_photos",
     )
+
+
+@router.post(
+    "/{trip_id}/add-media",
+    response_model=TripAddMediaResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def add_media_to_trip(
+    trip_id: uuid.UUID,
+    payload: TripAddMediaRequest,
+    db: Session = Depends(get_db),
+):
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found"
+        )
+    if not payload.object_keys:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="object_keys must not be empty",
+        )
+    job_id = enqueue_trip_media_add(db, trip_id, payload.object_keys)
+    return TripAddMediaResponse(trip_id=trip_id, job_id=job_id)
