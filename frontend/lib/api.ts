@@ -447,6 +447,11 @@ export type TripImportResponse = {
   trip_status: string;
 };
 
+export type TripAddMediaResponse = {
+  trip_id: string;
+  job_id: string;
+};
+
 export type ImportPresignResponse = {
   session_id: string;
   object_key: string;
@@ -482,6 +487,21 @@ export function importTripFromPhotos(payload: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+    },
+    API_BASE_PUBLIC,
+  );
+}
+
+export function addMediaToTrip(
+  tripId: string,
+  objectKeys: string[],
+): Promise<TripAddMediaResponse> {
+  return request<TripAddMediaResponse>(
+    `/trips/${tripId}/add-media`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ object_keys: objectKeys }),
     },
     API_BASE_PUBLIC,
   );
