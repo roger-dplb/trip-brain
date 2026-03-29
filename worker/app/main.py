@@ -17,6 +17,7 @@ JOB_TYPE_THUMBNAIL = "thumbnail_generation"
 JOB_TYPE_ITINERARY = "itinerary_generation"
 JOB_TYPE_STORIES_EXPORT = "stories_export"
 JOB_TYPE_TRIP_IMPORT = "trip_import"
+JOB_TYPE_TRIP_MEDIA_ADD = "trip_media_add"
 
 
 def _ensure_production_secure_settings() -> None:
@@ -869,6 +870,23 @@ def _dispatch_job(
             ),
         )
 
+    if job_type == JOB_TYPE_TRIP_MEDIA_ADD:
+        from app.add_media.processor import process_trip_media_add
+
+        return process_trip_media_add(
+            trip_id=source_id,
+            object_keys=list(payload.get("object_keys") or []),
+            database_url=_normalize_database_url(os.getenv("DATABASE_URL", "")),
+            storage_client=storage_client,
+            bucket=bucket,
+            openai_client=openai_client,
+            vision_model=import_model,
+            minio_public_endpoint=os.getenv(
+                "MINIO_PUBLIC_ENDPOINT",
+                os.getenv("MINIO_ENDPOINT", "http://minio:9000"),
+            ),
+        )
+
     raise RuntimeError(f"Unsupported job_type: {job_type}")
 
 
@@ -1019,6 +1037,8 @@ def _handle_job_failure(
                     "UPDATE trips SET status = 'import_failed', updated_at = NOW() WHERE id = %s",
                     (source_id,),
                 )
+        if job_type == JOB_TYPE_TRIP_MEDIA_ADD:
+            print(f"[add_media] job failed for trip={source_id}: {exc}")
         _log(
             "job_failed_terminal",
             job_id=job_id,
