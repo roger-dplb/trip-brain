@@ -1,4 +1,8 @@
 import io
+import json
+import os
+import subprocess
+import tempfile
 from datetime import datetime
 
 from PIL import Image
@@ -145,3 +149,65 @@ def cluster_into_activities(day_photos):
         groups.append(current_group)
 
     return groups
+
+
+def extract_video_metadata(video_bytes):
+    """
+    Extract creation date and duration from video bytes using ffprobe.
+    Writes bytes to a temp file, runs ffprobe, parses JSON output.
+    Returns dict with keys: taken_at (datetime|None), duration_seconds (float|None).
+    On any failure, returns {"taken_at": None, "duration_seconds": None}.
+    """
+    try:
+        suffix = ".mp4"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(video_bytes)
+            tmp_path = tmp.name
+
+        try:
+            result = subprocess.run(
+                [
+                    "ffprobe", "-v", "quiet",
+                    "-print_format", "json",
+                    "-show_streams", "-show_format",
+                    tmp_path,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        finally:
+            os.unlink(tmp_path)
+
+        if result.returncode != 0:
+            return {"taken_at": None, "duration_seconds": None}
+
+        data = json.loads(result.stdout)
+
+        # Duration from first stream
+        duration_seconds = None
+        for stream in data.get("streams", []):
+            raw_duration = stream.get("duration")
+            if raw_duration is not None:
+                try:
+                    duration_seconds = float(raw_duration)
+                    break
+                except (ValueError, TypeError):
+                    pass
+
+        # Creation time from format tags
+        taken_at = None
+        tags = data.get("format", {}).get("tags", {})
+        creation_time_str = tags.get("creation_time")
+        if creation_time_str:
+            for fmt in ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"):
+                try:
+                    taken_at = datetime.strptime(creation_time_str, fmt)
+                    break
+                except ValueError:
+                    continue
+
+        return {"taken_at": taken_at, "duration_seconds": duration_seconds}
+
+    except Exception:
+        return {"taken_at": None, "duration_seconds": None}
