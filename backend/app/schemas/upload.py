@@ -59,3 +59,12 @@ class TripImportResponse(BaseModel):
     trip_id: uuid.UUID
     job_id: uuid.UUID
     trip_status: str
+
+
+class TripAddMediaRequest(BaseModel):
+    object_keys: list[str]
+
+
+class TripAddMediaResponse(BaseModel):
+    trip_id: uuid.UUID
+    job_id: uuid.UUID
