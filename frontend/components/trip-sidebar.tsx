@@ -129,6 +129,25 @@ function ChatBubble() {
   );
 }
 
+function Upload() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="16 16 12 12 8 16" />
+      <line x1="12" y1="12" x2="12" y2="21" />
+      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+    </svg>
+  );
+}
+
 function ArrowLeft() {
   return (
     <svg
@@ -178,6 +197,7 @@ export function TripSidebar({ trip, tripId, isOpen = false, onClose }: Props) {
     { href: `/trips/${tripId}`, label: "Visão Geral", icon: <MapPin /> },
     { href: `/trips/${tripId}/timeline`, label: "Timeline", icon: <BarChart /> },
     { href: `/trips/${tripId}/memories`, label: "Memórias", icon: <Camera /> },
+    { href: `/trips/${tripId}/add-media`, label: "Adicionar Mídia", icon: <Upload /> },
     { href: `/trips/${tripId}/stories`, label: "Stories", icon: <Film /> },
     { href: `/trips/${tripId}/chat`, label: "Chat", icon: <ChatBubble /> },
   ];
