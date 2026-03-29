@@ -1038,7 +1038,7 @@ def _handle_job_failure(
                     (source_id,),
                 )
         if job_type == JOB_TYPE_TRIP_MEDIA_ADD:
-            print(f"[add_media] job failed for trip={source_id}: {exc}")
+            print(f"[add_media] job failed for trip={source_id}: {error}")
         _log(
             "job_failed_terminal",
             job_id=job_id,

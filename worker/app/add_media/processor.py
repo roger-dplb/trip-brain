@@ -3,7 +3,7 @@ import io
 import os
 import time
 import uuid
-from datetime import date, datetime
+from datetime import date
 from statistics import median
 
 import psycopg
