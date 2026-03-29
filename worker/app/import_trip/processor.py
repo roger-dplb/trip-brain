@@ -56,7 +56,7 @@ def process_trip_import(
     8. Set trip.status = 'planned'
     Returns a summary dict.
     """
-    endpoint = minio_public_endpoint.rstrip("/")
+    _ = minio_public_endpoint.rstrip("/")
 
     # ── Step 1: Download + extract EXIF ──────────────────────────────────────
     photos = []
