@@ -167,9 +167,13 @@ def extract_video_metadata(video_bytes):
         try:
             result = subprocess.run(
                 [
-                    "ffprobe", "-v", "quiet",
-                    "-print_format", "json",
-                    "-show_streams", "-show_format",
+                    "ffprobe",
+                    "-v",
+                    "quiet",
+                    "-print_format",
+                    "json",
+                    "-show_streams",
+                    "-show_format",
                     tmp_path,
                 ],
                 capture_output=True,
@@ -200,7 +204,11 @@ def extract_video_metadata(video_bytes):
         tags = data.get("format", {}).get("tags", {})
         creation_time_str = tags.get("creation_time")
         if creation_time_str:
-            for fmt in ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"):
+            for fmt in (
+                "%Y-%m-%dT%H:%M:%S.%fZ",
+                "%Y-%m-%dT%H:%M:%SZ",
+                "%Y-%m-%d %H:%M:%S",
+            ):
                 try:
                     taken_at = datetime.strptime(creation_time_str, fmt)
                     break

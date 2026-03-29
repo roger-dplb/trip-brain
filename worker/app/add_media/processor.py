@@ -200,8 +200,7 @@ def process_trip_media_add(
                 activity_groups = [videos]
 
         gps_photos = [
-            p for p in photos_only
-            if p["lat"] is not None and p["lon"] is not None
+            p for p in photos_only if p["lat"] is not None and p["lon"] is not None
         ]
         if gps_photos:
             med_lat = median([p["lat"] for p in gps_photos])
@@ -209,7 +208,11 @@ def process_trip_media_add(
             location = reverse_geocode(med_lat, med_lon)
             time.sleep(1)
         else:
-            location = {"country": "Desconhecido", "city": "Desconhecido", "region": None}
+            location = {
+                "country": "Desconhecido",
+                "city": "Desconhecido",
+                "region": None,
+            }
 
         if len(activity_groups) > 3:
             groups_to_describe = {0, len(activity_groups) - 1}
@@ -227,7 +230,9 @@ def process_trip_media_add(
                     if p.get("thumbnail_bytes") and p["memory_type"] == "photo"
                 ]
                 if photo_bytes_list:
-                    desc = describe_activity_from_photos(openai_client, vision_model, photo_bytes_list)
+                    desc = describe_activity_from_photos(
+                        openai_client, vision_model, photo_bytes_list
+                    )
                     title = (desc.get("title") or "Atividade").strip() or "Atividade"
                     notes = desc.get("notes") or None
                 else:
@@ -268,7 +273,14 @@ def process_trip_media_add(
                         INSERT INTO locations (id, trip_id, country, city, region, place_name, created_at)
                         VALUES (%s, %s, %s, %s, %s, %s, NOW())
                         """,
-                        (loc_id, trip_id, loc["country"], loc["city"], loc.get("region"), None),
+                        (
+                            loc_id,
+                            trip_id,
+                            loc["country"],
+                            loc["city"],
+                            loc.get("region"),
+                            None,
+                        ),
                     )
                     cur.execute(
                         "UPDATE days SET location_id = %s WHERE id = %s",
@@ -289,7 +301,13 @@ def process_trip_media_add(
                         INSERT INTO activities (id, day_id, title, location, notes, status, created_at, updated_at)
                         VALUES (%s, %s, %s, %s, %s, 'planned', NOW(), NOW())
                         """,
-                        (activity_id, day_id, activity["title"], loc_text, activity["notes"]),
+                        (
+                            activity_id,
+                            day_id,
+                            activity["title"],
+                            loc_text,
+                            activity["notes"],
+                        ),
                     )
                 activities_created += 1
 
@@ -308,7 +326,9 @@ def process_trip_media_add(
                         )
                         storage_client.delete_object(Bucket=bucket, Key=old_key)
                     except Exception as exc:
-                        print(f"[add_media] Failed to move {old_key} → {new_key}: {exc}")
+                        print(
+                            f"[add_media] Failed to move {old_key} → {new_key}: {exc}"
+                        )
                         new_key = old_key
 
                     with conn.cursor() as cur:
@@ -350,8 +370,12 @@ def process_trip_media_add(
                 )
                 all_dates = [r[0] for r in cur.fetchall()]
 
-            new_start = min(all_dates).isoformat() if all_dates else current_start.isoformat()
-            new_end = max(all_dates).isoformat() if all_dates else current_end.isoformat()
+            new_start = (
+                min(all_dates).isoformat() if all_dates else current_start.isoformat()
+            )
+            new_end = (
+                max(all_dates).isoformat() if all_dates else current_end.isoformat()
+            )
 
             days_summary = []
             for day in days_data:
@@ -363,7 +387,9 @@ def process_trip_media_add(
                 )
                 days_summary.append(
                     {
-                        "date": day["date_str"] if day["date_str"] != "unknown" else "desconhecida",
+                        "date": day["date_str"]
+                        if day["date_str"] != "unknown"
+                        else "desconhecida",
                         "activities": [a["title"] for a in day["activities"]],
                         "location": location_str,
                     }

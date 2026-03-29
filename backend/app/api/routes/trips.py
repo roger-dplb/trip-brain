@@ -21,7 +21,12 @@ from app.schemas.timeline import (
     TripTimelineRead,
 )
 from app.schemas.trip import TripCreate, TripRead, TripUpdate
-from app.schemas.upload import TripAddMediaRequest, TripAddMediaResponse, TripImportRequest, TripImportResponse
+from app.schemas.upload import (
+    TripAddMediaRequest,
+    TripAddMediaResponse,
+    TripImportRequest,
+    TripImportResponse,
+)
 from app.services.import_service import enqueue_trip_import, enqueue_trip_media_add
 from app.services.storage_service import StorageService
 from app.services.trip_service import TripService
