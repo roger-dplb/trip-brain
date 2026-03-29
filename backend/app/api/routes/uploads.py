@@ -19,7 +19,17 @@ from app.services.storage_service import StorageService
 
 router = APIRouter()
 
-_IMPORT_ALLOWED_CONTENT_TYPES = frozenset({"image/jpeg", "image/png", "image/webp"})
+_IMPORT_ALLOWED_CONTENT_TYPES = frozenset({
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "video/mp4",
+    "video/quicktime",
+    "video/avi",
+    "video/x-msvideo",
+    "video/x-matroska",
+    "video/webm",
+})
 
 
 def get_memory_service(db: Session = Depends(get_db)) -> MemoryService:
