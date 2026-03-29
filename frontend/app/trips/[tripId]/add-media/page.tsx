@@ -171,8 +171,10 @@ export default function AddMediaPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         setError(`Erro ao enviar (código ${err.status}). Tente novamente.`);
+      } else if (err instanceof Error) {
+        setError(err.message || "Ocorreu um erro ao enviar os arquivos. Tente novamente.");
       } else {
-        setError("Ocorreu um erro ao enviar os arquivos. Tente novamente.");
+        setError("Ocorreu um erro inesperado. Tente novamente.");
       }
       setUploading(false);
     }

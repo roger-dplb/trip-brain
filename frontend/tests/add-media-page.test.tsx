@@ -52,7 +52,7 @@ describe("AddMediaPage", () => {
   it("shows error when API call fails", async () => {
     const { createImportPresign: mockPresign } = await import("@/lib/api");
     (mockPresign as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error("Network error"),
+      new Error("Ocorreu um erro ao conectar"),
     );
 
     render(<AddMediaPage />);
