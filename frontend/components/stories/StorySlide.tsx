@@ -7,7 +7,7 @@ type ActivityData = DayData["activities"][number];
 type MemoryData = DayData["memories"][number];
 
 export type Slide =
-  | { type: "cover"; day: DayData }
+  | { type: "cover"; day: DayData | null; tripName: string }
   | { type: "activity"; day: DayData; activity: ActivityData; photos: MemoryData[] }
   | { type: "media"; day: DayData; media: MemoryData }
   | { type: "summary"; day: DayData; activities: ActivityData[] };
@@ -19,7 +19,7 @@ type Props = {
 
 export function StorySlide({ slide, onVideoEnded }: Props) {
   if (slide.type === "cover") {
-    return <CoverSlide day={slide.day} />;
+    return <CoverSlide day={slide.day} tripName={slide.tripName} />;
   }
   if (slide.type === "activity") {
     return <ActivitySlide day={slide.day} activity={slide.activity} photos={slide.photos} />;
@@ -30,12 +30,32 @@ export function StorySlide({ slide, onVideoEnded }: Props) {
   return <SummarySlide day={slide.day} activities={slide.activities} />;
 }
 
-function CoverSlide({ day }: { day: DayData }) {
+function CoverSlide({ day, tripName }: { day: DayData | null; tripName: string }) {
+  if (!day) {
+    // Trip-level cover
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex flex-col justify-between p-8 text-white select-none">
+        <span className="text-[10px] opacity-20 tracking-widest uppercase">trip-brain</span>
+        <div className="flex flex-col gap-4">
+          <div className="w-16 h-1 bg-[#ff6b6b] rounded-full" />
+          <h1 className="text-6xl font-extrabold leading-none tracking-tight">
+            {tripName}
+          </h1>
+          <p className="text-sm opacity-40 tracking-widest uppercase">sua viagem</p>
+        </div>
+        <span className="text-xs opacity-30 tracking-widest uppercase">comece a reviver</span>
+      </div>
+    );
+  }
+  // Day-level cover
   return (
     <div className="w-full h-full bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex flex-col justify-between p-8 text-white select-none">
-      <span className="text-xs tracking-[4px] opacity-50 uppercase font-medium">
-        Dia {day.day_number}
-      </span>
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] opacity-30 tracking-widest uppercase">{tripName}</span>
+        <span className="text-xs tracking-[4px] opacity-50 uppercase font-medium">
+          Dia {day.day_number}
+        </span>
+      </div>
       <div className="flex flex-col gap-3">
         <div className="w-12 h-1 bg-[#ff6b6b] rounded-full" />
         <h2 className="text-5xl font-extrabold leading-none tracking-tight">

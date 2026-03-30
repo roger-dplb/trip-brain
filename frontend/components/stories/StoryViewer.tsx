@@ -14,9 +14,12 @@ type Props = {
 function buildSlides(timeline: Timeline): Slide[] {
   const slides: Slide[] = [];
 
+  // First slide: trip cover
+  slides.push({ type: "cover", day: null, tripName: timeline.trip_name });
+
   for (const day of timeline.days) {
-    // Cover
-    slides.push({ type: "cover", day });
+    // Day cover
+    slides.push({ type: "cover", day, tripName: timeline.trip_name });
 
     // Activity slides — one per photo per activity
     const activitiesWithoutPhotos: typeof day.activities = [];

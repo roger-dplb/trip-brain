@@ -136,7 +136,7 @@ def get_trip_timeline(trip_id: uuid.UUID, db: Session = Depends(get_db)):
             )
         )
 
-    return TripTimelineRead(trip_id=trip_id, days=timeline_days)
+    return TripTimelineRead(trip_id=trip_id, trip_name=trip.name, days=timeline_days)
 
 
 @router.put("/{trip_id}", response_model=TripRead)

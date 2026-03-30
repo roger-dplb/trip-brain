@@ -37,4 +37,5 @@ class TimelineDay(BaseModel):
 
 class TripTimelineRead(BaseModel):
     trip_id: uuid.UUID
+    trip_name: str
     days: list[TimelineDay]
