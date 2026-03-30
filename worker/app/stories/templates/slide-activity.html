@@ -10,7 +10,6 @@
     width: 1080px; height: 1920px;
     background: #111;
     font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
-    display: flex; flex-direction: column;
     color: #fff; overflow: hidden; position: relative;
   }
   .photo-main {
@@ -19,8 +18,7 @@
   }
   .overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(
-      to bottom,
+    background: linear-gradient(to bottom,
       rgba(0,0,0,0.15) 0%,
       transparent 30%,
       transparent 55%,
@@ -28,37 +26,22 @@
     );
   }
   .top-label {
-    position: absolute; top: 60px; left: 70px;
+    position: absolute; top: 80px; left: 70px;
     font-size: 24px; letter-spacing: 4px; opacity: 0.7;
     text-transform: uppercase; font-weight: 500;
   }
   .bottom {
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 60px 70px 80px;
+    padding: 60px 70px 100px;
+    display: flex; flex-direction: column; gap: 20px;
   }
   .activity-title {
-    font-size: 80px; font-weight: 800; line-height: 1.05;
-    letter-spacing: -1px; margin-bottom: 20px;
+    font-size: 80px; font-weight: 900; line-height: 1.05;
+    letter-spacing: -1px;
   }
   .meta {
-    font-size: 30px; opacity: 0.65;
-    display: flex; gap: 30px; align-items: center;
-  }
-  .thumbnails {
-    display: flex; gap: 12px; margin-top: 30px;
-  }
-  .thumb {
-    width: 100px; height: 100px;
-    border-radius: 12px;
-    background-size: cover; background-position: center;
-    border: 2px solid rgba(255,255,255,0.4);
-  }
-  .thumb-more {
-    width: 100px; height: 100px; border-radius: 12px;
-    background: rgba(255,255,255,0.15);
-    border: 2px solid rgba(255,255,255,0.4);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px; font-weight: 600;
+    font-size: 32px; opacity: 0.65;
+    display: flex; gap: 40px; align-items: center;
   }
 </style>
 </head>
@@ -72,7 +55,6 @@
     <span id="location"></span>
     <span id="time"></span>
   </div>
-  <div class="thumbnails" id="thumbnails"></div>
 </div>
 <script>
   const data = window.__DATA__ || {};
@@ -90,23 +72,6 @@
   const time = data.activity_time;
   if (loc) document.getElementById('location').textContent = `📍 ${loc}`;
   if (time) document.getElementById('time').textContent = `🕐 ${time}`;
-
-  if (urls.length > 1) {
-    const container = document.getElementById('thumbnails');
-    const extras = urls.slice(1, 4);
-    extras.forEach(url => {
-      const div = document.createElement('div');
-      div.className = 'thumb';
-      div.style.backgroundImage = `url('${url}')`;
-      container.appendChild(div);
-    });
-    if (urls.length > 4) {
-      const more = document.createElement('div');
-      more.className = 'thumb-more';
-      more.textContent = `+${urls.length - 4}`;
-      container.appendChild(more);
-    }
-  }
 </script>
 </body>
 </html>

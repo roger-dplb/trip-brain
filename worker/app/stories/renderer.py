@@ -11,8 +11,10 @@ from app.stories.slides import SlideData
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 TEMPLATE_MAP = {
+    "trip_cover": TEMPLATES_DIR / "slide-trip-cover.html",
     "cover": TEMPLATES_DIR / "slide-cover.html",
     "activity": TEMPLATES_DIR / "slide-activity.html",
+    "media": TEMPLATES_DIR / "slide-media.html",
     "summary": TEMPLATES_DIR / "slide-summary.html",
 }
 
@@ -72,13 +74,19 @@ def _slide_to_dict(slide: SlideData) -> dict:
         "day_number": slide.day_number,
         "day_date": slide.day_date,
         "day_city": slide.day_city,
-        "day_caption": slide.day_caption,
+        "day_country": slide.day_country,
+        "trip_name": slide.trip_name,
+        "trip_cover_url": slide.trip_cover_url,
         "total_activities": slide.total_activities,
         "total_photos": slide.total_photos,
+        "hero_photo_url": slide.hero_photo_url,
         "activity_title": slide.activity_title,
         "activity_location": slide.activity_location,
         "activity_time": slide.activity_time,
         "photo_urls": slide.photo_urls,
         "photo_captions": slide.photo_captions,
+        "media_url": slide.media_url,
+        "media_caption": slide.media_caption,
+        "media_type": slide.media_type,
         "activity_titles": slide.activity_titles,
     }

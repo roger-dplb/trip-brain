@@ -845,8 +845,6 @@ def _dispatch_job(
             database_url=_normalize_database_url(os.getenv("DATABASE_URL", "")),
             storage_client=storage_client,
             bucket=bucket,
-            openai_client=openai_client,
-            openai_model=caption_model,
             minio_public_endpoint=os.getenv(
                 "MINIO_PUBLIC_ENDPOINT",
                 os.getenv("MINIO_ENDPOINT", "http://minio:9000"),
