@@ -4,22 +4,23 @@ import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 
 import {
-  Activity,
-  Trip,
-  completeUpload,
-  createUploadPresign,
-  fetchActivitiesByDay,
-  fetchDaysByTrip,
-  fetchMemoriesByTrip,
-  fetchTrip,
+    Activity,
+    Trip,
+    completeUpload,
+    createUploadPresign,
+    deleteMemory,
+    fetchActivitiesByDay,
+    fetchDaysByTrip,
+    fetchMemoriesByTrip,
+    fetchTrip,
 } from "@/lib/api";
 import { getDayLabel } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ export default function TripMemoriesPage({ params }: PageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ url: string; caption?: string | null } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     const [tripMemories, tripDays, tripData] = await Promise.all([
@@ -377,9 +379,39 @@ export default function TripMemoriesPage({ params }: PageProps) {
                     <span className="text-xs font-semibold text-[#ff6b6b] capitalize bg-[#f3ece8] px-2 py-0.5 rounded-full">
                       {memory.memory_type}
                     </span>
-                    <span className="text-xs text-[#8b8b8b]">
-                      {new Date(memory.created_at).toLocaleDateString("pt-BR")}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[#8b8b8b]">
+                        {new Date(memory.created_at).toLocaleDateString("pt-BR")}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={deletingId === memory.id}
+                        className="text-[#c0b5ae] hover:text-red-500 transition-colors disabled:opacity-40"
+                        aria-label="Excluir memória"
+                        onClick={async () => {
+                          if (!confirm("Excluir esta memória?")) return;
+                          setDeletingId(memory.id);
+                          try {
+                            await deleteMemory(memory.id);
+                            await loadData();
+                          } catch {
+                            setError("Não foi possível excluir a memória.");
+                          } finally {
+                            setDeletingId(null);
+                          }
+                        }}
+                      >
+                        {deletingId === memory.id ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-spin">
+                            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <p className="text-sm font-medium text-[#242424] mt-2">
                     {memory.caption ?? "Sem legenda"}

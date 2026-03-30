@@ -233,6 +233,10 @@ export function fetchMemoriesByTrip(tripId: string): Promise<Memory[]> {
   return request<Memory[]>(`/memories/?trip_id=${tripId}`);
 }
 
+export function deleteMemory(memoryId: string): Promise<void> {
+  return request<void>(`/memories/${memoryId}`, { method: "DELETE" });
+}
+
 export function createTrip(payload: {
   name: string;
   destinations: string[];

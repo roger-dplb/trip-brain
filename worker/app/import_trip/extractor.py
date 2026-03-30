@@ -1,9 +1,10 @@
 import io
 import json
 import os
+import re
 import subprocess
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 
 from PIL import Image
 
@@ -151,15 +152,16 @@ def cluster_into_activities(day_photos):
     return groups
 
 
-def extract_video_metadata(video_bytes):
+def extract_video_metadata(video_bytes, file_ext: str = ".mp4"):
     """
-    Extract creation date and duration from video bytes using ffprobe.
+    Extract creation date, duration and GPS from video bytes using ffprobe.
     Writes bytes to a temp file, runs ffprobe, parses JSON output.
-    Returns dict with keys: taken_at (datetime|None), duration_seconds (float|None).
-    On any failure, returns {"taken_at": None, "duration_seconds": None}.
+    Returns dict with keys: taken_at (datetime|None), duration_seconds (float|None),
+    lat (float|None), lon (float|None).
+    On any failure, returns all keys as None.
     """
     try:
-        suffix = ".mp4"
+        suffix = file_ext if file_ext.startswith(".") else f".{file_ext}"
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp.write(video_bytes)
             tmp_path = tmp.name
@@ -184,9 +186,12 @@ def extract_video_metadata(video_bytes):
             os.unlink(tmp_path)
 
         if result.returncode != 0:
-            return {"taken_at": None, "duration_seconds": None}
+            print(f"[extractor] ffprobe failed (rc={result.returncode}): {result.stderr[:300]}")
+            return {"taken_at": None, "duration_seconds": None, "lat": None, "lon": None}
 
         data = json.loads(result.stdout)
+        fmt_tags = data.get("format", {}).get("tags", {})
+        print(f"[extractor] ffprobe format tags: {fmt_tags}")
 
         # Duration from first stream
         duration_seconds = None
@@ -200,22 +205,75 @@ def extract_video_metadata(video_bytes):
                     pass
 
         # Creation time from format tags
+        # Prefer com.apple.quicktime.creationdate (local time with tz offset, e.g. '2026-03-26T10:48:27+0000')
+        # over creation_time which is the file encoding time in UTC and may be wrong
         taken_at = None
         tags = data.get("format", {}).get("tags", {})
-        creation_time_str = tags.get("creation_time")
-        if creation_time_str:
+        for tag_key in (
+            "com.apple.quicktime.creationdate",
+            "creation_time",
+        ):
+            creation_time_str = tags.get(tag_key)
+            if not creation_time_str:
+                continue
             for fmt in (
+                "%Y-%m-%dT%H:%M:%S%z",
+                "%Y-%m-%dT%H:%M:%S.%f%z",
                 "%Y-%m-%dT%H:%M:%S.%fZ",
                 "%Y-%m-%dT%H:%M:%SZ",
                 "%Y-%m-%d %H:%M:%S",
             ):
                 try:
-                    taken_at = datetime.strptime(creation_time_str, fmt)
+                    parsed = datetime.strptime(creation_time_str, fmt)
+                    # Convert to naive local date (strip tz) so clustering uses local date
+                    if parsed.tzinfo is not None:
+                        taken_at = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+                    else:
+                        taken_at = parsed
                     break
                 except ValueError:
                     continue
+            if taken_at:
+                break
 
-        return {"taken_at": taken_at, "duration_seconds": duration_seconds}
+        # GPS location — iPhone .mov stores ISO 6709 in format.tags or stream tags
+        lat = None
+        lon = None
+        tags = data.get("format", {}).get("tags", {})
+        location_str = (
+            tags.get("location")
+            or tags.get("com.apple.quicktime.location.ISO6709")
+            or tags.get("Location")
+        )
+        # Also check stream-level tags
+        if not location_str:
+            for stream in data.get("streams", []):
+                stags = stream.get("tags", {})
+                location_str = (
+                    stags.get("location")
+                    or stags.get("com.apple.quicktime.location.ISO6709")
+                    or stags.get("Location")
+                )
+                if location_str:
+                    break
+        print(f"[extractor] location_str={location_str!r}")
+        if location_str:
+            try:
+                # ISO 6709 format examples:
+                #   "+48.8566+002.3522/"
+                #   "+48.8566+002.3522+35.000/"
+                m = re.match(
+                    r"^([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)", location_str.strip()
+                )
+                if m:
+                    lat = float(m.group(1))
+                    lon = float(m.group(2))
+            except Exception:
+                lat = None
+                lon = None
 
-    except Exception:
-        return {"taken_at": None, "duration_seconds": None}
+        return {"taken_at": taken_at, "duration_seconds": duration_seconds, "lat": lat, "lon": lon}
+
+    except Exception as exc:
+        print(f"[extractor] extract_video_metadata failed: {exc}")
+        return {"taken_at": None, "duration_seconds": None, "lat": None, "lon": None}

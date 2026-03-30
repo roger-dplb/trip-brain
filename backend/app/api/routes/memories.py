@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.repositories.activity_repository import ActivityRepository
+from app.repositories.day_repository import DayRepository
 from app.repositories.memory_repository import MemoryRepository
 from app.schemas.memory import MemoryCreate, MemoryRead, MemoryUpdate
 from app.services.memory_service import MemoryService
@@ -13,7 +15,11 @@ router = APIRouter()
 
 
 def get_service(db: Session = Depends(get_db)) -> MemoryService:
-    return MemoryService(MemoryRepository(db))
+    return MemoryService(
+        MemoryRepository(db),
+        activity_repository=ActivityRepository(db),
+        day_repository=DayRepository(db),
+    )
 
 
 def get_storage_service() -> StorageService:

@@ -72,6 +72,15 @@ def enqueue_trip_media_add(
                 :job_id, 'trip_media_add', 'trip', :trip_id,
                 'pending', CAST(:payload AS JSONB), :payload_hash, NOW()
             )
+            ON CONFLICT (job_type, source_type, source_id) DO UPDATE
+            SET
+                status = 'pending',
+                attempt_count = 0,
+                available_at = NOW(),
+                payload = EXCLUDED.payload,
+                payload_hash = EXCLUDED.payload_hash,
+                last_error = NULL,
+                updated_at = NOW()
             RETURNING id
         """),
         {

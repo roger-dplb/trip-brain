@@ -12,6 +12,7 @@ from app.import_trip.extractor import (
     cluster_by_date,
     cluster_into_activities,
     extract_photo_metadata,
+    extract_video_metadata,
 )
 from app.import_trip.generator import (
     describe_activity_from_photos,
@@ -58,22 +59,40 @@ def process_trip_import(
     """
     _ = minio_public_endpoint.rstrip("/")
 
+    _VIDEO_EXTENSIONS = frozenset({".mp4", ".mov", ".avi", ".mkv", ".m4v", ".3gp"})
+
     # ── Step 1: Download + extract EXIF ──────────────────────────────────────
     photos = []
     for key in object_keys:
         try:
             response = storage_client.get_object(Bucket=bucket, Key=key)
-            image_bytes = response["Body"].read()
-            meta = extract_photo_metadata(image_bytes)
-            photos.append(
-                {
-                    "object_key": key,
-                    "taken_at": meta["taken_at"],
-                    "lat": meta["lat"],
-                    "lon": meta["lon"],
-                    "thumbnail_bytes": _make_thumbnail_bytes(image_bytes),
-                }
-            )
+            file_bytes = response["Body"].read()
+            ext = os.path.splitext(key)[1].lower()
+            is_video = ext in _VIDEO_EXTENSIONS
+            if is_video:
+                meta = extract_video_metadata(file_bytes, file_ext=ext)
+                photos.append(
+                    {
+                        "object_key": key,
+                        "taken_at": meta["taken_at"],
+                        "lat": meta.get("lat"),
+                        "lon": meta.get("lon"),
+                        "thumbnail_bytes": None,
+                        "memory_type": "video",
+                    }
+                )
+            else:
+                meta = extract_photo_metadata(file_bytes)
+                photos.append(
+                    {
+                        "object_key": key,
+                        "taken_at": meta["taken_at"],
+                        "lat": meta["lat"],
+                        "lon": meta["lon"],
+                        "thumbnail_bytes": _make_thumbnail_bytes(file_bytes),
+                        "memory_type": "photo",
+                    }
+                )
         except Exception as exc:
             print(f"[import_trip] Failed to download/extract {key}: {exc}")
             photos.append(
@@ -83,6 +102,7 @@ def process_trip_import(
                     "lat": None,
                     "lon": None,
                     "thumbnail_bytes": None,
+                    "memory_type": "photo",
                 }
             )
 
@@ -305,13 +325,14 @@ def process_trip_import(
                                 id, trip_id, day_id, activity_id,
                                 memory_type, storage_key, taken_at, created_at
                             )
-                            VALUES (%s, %s, %s, %s, 'photo', %s, %s, NOW())
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
                             """,
                             (
                                 uuid.uuid4(),
                                 trip_id,
                                 day_id,
                                 activity_id,
+                                photo.get("memory_type", "photo"),
                                 new_key,
                                 photo.get("taken_at"),
                             ),

@@ -140,13 +140,13 @@ def process_trip_media_add(
             ext = os.path.splitext(key)[1].lower()
             is_video = ext in _VIDEO_EXTENSIONS
             if is_video:
-                meta = extract_video_metadata(file_bytes)
+                meta = extract_video_metadata(file_bytes, file_ext=ext)
                 media_items.append(
                     {
                         "object_key": key,
                         "taken_at": meta["taken_at"],
-                        "lat": None,
-                        "lon": None,
+                        "lat": meta.get("lat"),
+                        "lon": meta.get("lon"),
                         "thumbnail_bytes": None,
                         "memory_type": "video",
                     }
@@ -190,17 +190,11 @@ def process_trip_media_add(
         day_media = days_map[date_str]
         # Only photos are used for activity clustering and Vision
         photos_only = [m for m in day_media if m["memory_type"] == "photo"]
-        activity_groups = cluster_into_activities(photos_only) if photos_only else [[]]
-        # Videos appended to last activity group
         videos = [m for m in day_media if m["memory_type"] == "video"]
-        if videos:
-            if activity_groups:
-                activity_groups[-1].extend(videos)
-            else:
-                activity_groups = [videos]
+        activity_groups = cluster_into_activities(photos_only) if photos_only else [[]]
 
         gps_photos = [
-            p for p in photos_only if p["lat"] is not None and p["lon"] is not None
+            p for p in day_media if p["lat"] is not None and p["lon"] is not None
         ]
         if gps_photos:
             med_lat = median([p["lat"] for p in gps_photos])
@@ -249,6 +243,7 @@ def process_trip_media_add(
                 "date_str": date_str,
                 "location": location,
                 "activities": activities_data,
+                "videos": videos,
             }
         )
 
@@ -351,6 +346,44 @@ def process_trip_media_add(
                             ),
                         )
                     memories_created += 1
+
+            # Persist videos as day-level memories (no activity)
+            for video in day.get("videos", []):
+                old_key = video["object_key"]
+                ext = os.path.splitext(old_key)[1] or ".mov"
+                new_key = (
+                    f"trips/{trip_id}/days/{day_id}"
+                    f"/{uuid.uuid4()}{ext}"
+                )
+                try:
+                    storage_client.copy_object(
+                        Bucket=bucket,
+                        CopySource={"Bucket": bucket, "Key": old_key},
+                        Key=new_key,
+                    )
+                    storage_client.delete_object(Bucket=bucket, Key=old_key)
+                except Exception as exc:
+                    print(f"[add_media] Failed to move video {old_key} → {new_key}: {exc}")
+                    new_key = old_key
+
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO memories (
+                            id, trip_id, day_id, activity_id,
+                            memory_type, storage_key, taken_at, created_at
+                        )
+                        VALUES (%s, %s, %s, NULL, 'video', %s, %s, NOW())
+                        """,
+                        (
+                            uuid.uuid4(),
+                            trip_id,
+                            day_id,
+                            new_key,
+                            video.get("taken_at"),
+                        ),
+                    )
+                memories_created += 1
 
         # ── Selective trip metadata update ────────────────────────────────────
         with conn.cursor() as cur:

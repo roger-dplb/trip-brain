@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { Trip, Timeline, fetchTrip, fetchTripTimeline, createUploadPresign, completeUpload } from "@/lib/api";
+import { Timeline, Trip, completeUpload, createUploadPresign, fetchTrip, fetchTripTimeline } from "@/lib/api";
 import { formatDate, getDayLabel } from "@/lib/utils";
 
 type PageProps = {
@@ -36,7 +36,7 @@ export default function TripTimelinePage({ params }: PageProps) {
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lightbox, setLightbox] = useState<{ url: string; caption?: string | null } | null>(null);
+  const [lightbox, setLightbox] = useState<{ items: { url: string; caption?: string | null; type: "photo" | "video" }[]; index: number } | null>(null);
   const [uploadingDayId, setUploadingDayId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [openUploadDayId, setOpenUploadDayId] = useState<string | null>(null);
@@ -59,6 +59,31 @@ export default function TripTimelinePage({ params }: PageProps) {
     }
     load();
   }, [params.tripId]);
+
+  const openLightbox = useCallback((items: { url: string; caption?: string | null; type: "photo" | "video" }[], index: number) => {
+    setLightbox({ items, index });
+  }, []);
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+
+  const lightboxPrev = useCallback(() => {
+    setLightbox((lb) => lb && lb.index > 0 ? { ...lb, index: lb.index - 1 } : lb);
+  }, []);
+
+  const lightboxNext = useCallback(() => {
+    setLightbox((lb) => lb && lb.index < lb.items.length - 1 ? { ...lb, index: lb.index + 1 } : lb);
+  }, []);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") lightboxPrev();
+      else if (e.key === "ArrowRight") lightboxNext();
+      else if (e.key === "Escape") closeLightbox();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox, lightboxPrev, lightboxNext, closeLightbox]);
 
   if (loading) {
     return (
@@ -113,74 +138,204 @@ export default function TripTimelinePage({ params }: PageProps) {
     }
   }
 
-  function renderMemoryPreview(memory: Timeline["days"][number]["memories"][number]) {
-    if (!memory.public_url) {
-      return null;
-    }
+  function renderMemoryCell(
+    memory: Timeline["days"][number]["memories"][number],
+    index: number,
+    allMemories: Timeline["days"][number]["memories"],
+    totalCount: number
+  ) {
+    const isLastVisible = totalCount > 4 && index === 3;
+    const hiddenCount = totalCount - 4;
+    const mediaList = allMemories
+      .filter((m) => m.public_url)
+      .map((m) => ({ url: m.public_url!, caption: m.caption, type: m.memory_type as "photo" | "video" }));
+    const mediaIndex = mediaList.findIndex((p) => p.url === memory.public_url);
 
-    if (memory.memory_type === "photo") {
+    if (memory.memory_type === "video" && memory.public_url) {
       return (
         <button
+          key={memory.id}
           type="button"
-          className="relative mt-3 aspect-[4/3] w-full overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-white cursor-zoom-in"
-          onClick={() => setLightbox({ url: memory.public_url!, caption: memory.caption })}
+          className="relative aspect-square overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-black cursor-pointer"
+          onClick={() => openLightbox(mediaList, mediaIndex >= 0 ? mediaIndex : 0)}
+        >
+          <video
+            className="w-full h-full object-cover pointer-events-none"
+            preload="metadata"
+            src={memory.public_url}
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </div>
+          </div>
+          {isLastVisible && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xl font-bold rounded-lg">
+              +{hiddenCount}
+            </span>
+          )}
+        </button>
+      );
+    }
+
+    if (memory.memory_type === "photo" && memory.public_url) {
+      return (
+        <button
+          key={memory.id}
+          type="button"
+          className="relative aspect-square overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-white cursor-zoom-in"
+          onClick={() => openLightbox(mediaList, mediaIndex >= 0 ? mediaIndex : 0)}
         >
           <Image
             src={memory.public_url}
             alt={memory.caption ?? "Memória da viagem"}
             fill
-            sizes="(max-width: 768px) 100vw, 33vw"
+            sizes="(max-width: 768px) 50vw, 20vw"
             className="object-cover hover:scale-105 transition-transform duration-300"
             unoptimized
           />
+          {isLastVisible && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xl font-bold rounded-lg">
+              +{hiddenCount}
+            </span>
+          )}
         </button>
-      );
-    }
-
-    if (memory.memory_type === "video") {
-      return (
-        <video
-          className="mt-3 aspect-[4/3] w-full rounded-lg border border-[rgba(0,0,0,0.08)] bg-black object-cover"
-          controls
-          preload="metadata"
-          src={memory.public_url}
-        />
       );
     }
 
     return null;
   }
 
-  return (
-    <>
-    {lightbox && (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-        onClick={() => setLightbox(null)}
-      >
+  function renderMemoriesGrid(memories: Timeline["days"][number]["memories"]) {
+    const visible = memories.filter((m) => m.public_url);
+    if (visible.length === 0) return null;
+
+    const shown = visible.slice(0, 4);
+    const total = visible.length;
+
+    if (total === 1) {
+      const m = shown[0];
+      const singleItem = [{ url: m.public_url!, caption: m.caption, type: m.memory_type as "photo" | "video" }];
+      if (m.memory_type === "video") {
+        return (
+          <button
+            type="button"
+            className="relative mt-2 aspect-[4/3] w-full overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-black cursor-pointer"
+            onClick={() => openLightbox(singleItem, 0)}
+          >
+            <video className="w-full h-full object-cover pointer-events-none" preload="metadata" src={m.public_url ?? undefined} />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+          </button>
+        );
+      }
+      return (
         <button
           type="button"
-          className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
-          onClick={() => setLightbox(null)}
-          aria-label="Fechar"
+          className="relative mt-2 aspect-[4/3] w-full overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-white cursor-zoom-in"
+          onClick={() => openLightbox(singleItem, 0)}
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <Image src={m.public_url!} alt={m.caption ?? "Memória da viagem"} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover hover:scale-105 transition-transform duration-300" unoptimized />
         </button>
-        <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightbox.url}
-            alt={lightbox.caption ?? "Memória da viagem"}
-            className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
-          />
-          {lightbox.caption && (
-            <p className="mt-3 text-center text-sm text-white/80">{lightbox.caption}</p>
-          )}
+      );
+    }
+
+    if (total === 3) {
+      return (
+        <div className="mt-2 space-y-1">
+          <div className="w-full">{renderMemoryCell(shown[0], 0, visible, total)}</div>
+          <div className="grid grid-cols-2 gap-1">
+            {shown.slice(1).map((m, i) => renderMemoryCell(m, i + 1, visible, total))}
+          </div>
         </div>
+      );
+    }
+
+    return (
+      <div className="mt-2 grid grid-cols-2 gap-1">
+        {shown.map((m, i) => renderMemoryCell(m, i, visible, total))}
       </div>
-    )}
+    );
+  }
+
+  return (
+    <>
+    {lightbox && (() => {
+      const current = lightbox.items[lightbox.index];
+      const hasPrev = lightbox.index > 0;
+      const hasNext = lightbox.index < lightbox.items.length - 1;
+      return (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={closeLightbox}
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+            onClick={closeLightbox}
+            aria-label="Fechar"
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          {hasPrev && (
+            <button
+              type="button"
+              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors bg-black/30 hover:bg-black/50 rounded-full p-2"
+              onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
+              aria-label="Anterior"
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+          )}
+
+          {hasNext && (
+            <button
+              type="button"
+              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors bg-black/30 hover:bg-black/50 rounded-full p-2"
+              onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
+              aria-label="Próxima"
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          )}
+
+          <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            {current.type === "video" ? (
+              <video
+                key={current.url}
+                src={current.url}
+                controls
+                autoPlay
+                className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={current.url}
+                alt={current.caption ?? "Memória da viagem"}
+                className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
+              />
+            )}
+            {lightbox.items.length > 1 && (
+              <p className="mt-2 text-center text-xs text-white/50">{lightbox.index + 1} / {lightbox.items.length}</p>
+            )}
+            {current.caption && (
+              <p className="mt-1 text-center text-sm text-white/80">{current.caption}</p>
+            )}
+          </div>
+        </div>
+      );
+    })()}
     <div className="min-h-screen">
       {/* Page header */}
       <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
@@ -361,17 +516,11 @@ export default function TripTimelinePage({ params }: PageProps) {
                       {day.memories.length === 0 ? (
                         <li className="text-sm text-[#8b8b8b]">Sem memórias</li>
                       ) : (
-                        day.memories.map((memory) => (
-                          <li key={memory.id} className="rounded-lg bg-[#fff9f6] px-3 py-2 text-sm">
-                            <span className="font-medium text-[#242424] capitalize">
-                              {memory.memory_type}
-                            </span>
-                            {memory.caption && (
-                              <p className="text-[#8b8b8b] text-xs mt-0.5">{memory.caption}</p>
-                            )}
-                            {renderMemoryPreview(memory)}
+                        [(
+                          <li key="memories-grid" className="rounded-lg bg-[#fff9f6] px-3 py-2 text-sm">
+                            {renderMemoriesGrid(day.memories)}
                           </li>
-                        ))
+                        )]
                       )}
                     </ul>
                   </div>

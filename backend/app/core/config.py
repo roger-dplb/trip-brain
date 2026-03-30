@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     minio_region: str = "us-east-1"
     presigned_expires_in_seconds: int = 900
     max_upload_size_bytes: int = 26214400
-    allowed_upload_content_types: str = "image/jpeg,image/png,image/webp,video/mp4"
+    allowed_upload_content_types: str = "image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/avi,video/x-msvideo,video/x-matroska,video/webm"
     openai_api_key: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
     itinerary_provider: str = "openai"
