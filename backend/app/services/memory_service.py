@@ -46,7 +46,6 @@ class MemoryService:
 
     def delete(self, memory: Memory) -> None:
         activity_id = memory.activity_id
-        day_id = memory.day_id
         self.repository.delete(memory)
 
         if activity_id and self.activity_repository and self.day_repository:
