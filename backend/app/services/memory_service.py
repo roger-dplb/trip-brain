@@ -55,8 +55,12 @@ class MemoryService:
                 if activity:
                     parent_day_id = activity.day_id
                     self.activity_repository.delete(activity)
-                    remaining_activities = self.activity_repository.list(day_id=parent_day_id, limit=1)
-                    remaining_day_memories = self.repository.list(day_id=parent_day_id, limit=1)
+                    remaining_activities = self.activity_repository.list(
+                        day_id=parent_day_id, limit=1
+                    )
+                    remaining_day_memories = self.repository.list(
+                        day_id=parent_day_id, limit=1
+                    )
                     if not remaining_activities and not remaining_day_memories:
                         day = self.day_repository.get(parent_day_id)
                         if day:

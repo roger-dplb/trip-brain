@@ -351,10 +351,7 @@ def process_trip_media_add(
             for video in day.get("videos", []):
                 old_key = video["object_key"]
                 ext = os.path.splitext(old_key)[1] or ".mov"
-                new_key = (
-                    f"trips/{trip_id}/days/{day_id}"
-                    f"/{uuid.uuid4()}{ext}"
-                )
+                new_key = f"trips/{trip_id}/days/{day_id}/{uuid.uuid4()}{ext}"
                 try:
                     storage_client.copy_object(
                         Bucket=bucket,
@@ -363,7 +360,9 @@ def process_trip_media_add(
                     )
                     storage_client.delete_object(Bucket=bucket, Key=old_key)
                 except Exception as exc:
-                    print(f"[add_media] Failed to move video {old_key} → {new_key}: {exc}")
+                    print(
+                        f"[add_media] Failed to move video {old_key} → {new_key}: {exc}"
+                    )
                     new_key = old_key
 
                 with conn.cursor() as cur:

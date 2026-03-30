@@ -186,8 +186,15 @@ def extract_video_metadata(video_bytes, file_ext: str = ".mp4"):
             os.unlink(tmp_path)
 
         if result.returncode != 0:
-            print(f"[extractor] ffprobe failed (rc={result.returncode}): {result.stderr[:300]}")
-            return {"taken_at": None, "duration_seconds": None, "lat": None, "lon": None}
+            print(
+                f"[extractor] ffprobe failed (rc={result.returncode}): {result.stderr[:300]}"
+            )
+            return {
+                "taken_at": None,
+                "duration_seconds": None,
+                "lat": None,
+                "lon": None,
+            }
 
         data = json.loads(result.stdout)
         fmt_tags = data.get("format", {}).get("tags", {})
@@ -272,7 +279,12 @@ def extract_video_metadata(video_bytes, file_ext: str = ".mp4"):
                 lat = None
                 lon = None
 
-        return {"taken_at": taken_at, "duration_seconds": duration_seconds, "lat": lat, "lon": lon}
+        return {
+            "taken_at": taken_at,
+            "duration_seconds": duration_seconds,
+            "lat": lat,
+            "lon": lon,
+        }
 
     except Exception as exc:
         print(f"[extractor] extract_video_metadata failed: {exc}")
