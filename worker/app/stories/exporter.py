@@ -121,9 +121,11 @@ def _fetch_trip(trip_id: str, database_url: str, minio_public_endpoint: str) -> 
             day_rows = cur.fetchall()
 
             for day_id, day_number, date, notes in day_rows:
-                # Fetch location for this day
+                # Fetch location for this day via days.location_id
                 cur.execute(
-                    "SELECT city, country FROM locations WHERE day_id = %s LIMIT 1",
+                    "SELECT l.city, l.country FROM locations l "
+                    "JOIN days d ON d.location_id = l.id "
+                    "WHERE d.id = %s LIMIT 1",
                     (day_id,),
                 )
                 loc_row = cur.fetchone()
