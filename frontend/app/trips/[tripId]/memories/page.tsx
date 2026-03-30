@@ -4,25 +4,25 @@ import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
 import {
-    Activity,
-    Trip,
-    completeUpload,
-    createUploadPresign,
-    deleteMemory,
-    fetchActivitiesByDay,
-    fetchDaysByTrip,
-    fetchMemoriesByTrip,
-    fetchTrip,
+  Activity,
+  Trip,
+  completeUpload,
+  createUploadPresign,
+  deleteMemory,
+  fetchActivitiesByDay,
+  fetchDaysByTrip,
+  fetchMemoriesByTrip,
+  fetchTrip,
 } from "@/lib/api";
-import { getDayLabel } from "@/lib/utils";
+import { formatDate, getDayLabel } from "@/lib/utils";
 
 type PageProps = {
   params: {
@@ -376,12 +376,14 @@ export default function TripMemoriesPage({ params }: PageProps) {
                   className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] p-4"
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="text-xs font-semibold text-[#ff6b6b] capitalize bg-[#f3ece8] px-2 py-0.5 rounded-full">
-                      {memory.memory_type}
-                    </span>
+
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-[#8b8b8b]">
-                        {new Date(memory.created_at).toLocaleDateString("pt-BR")}
+                        {(() => {
+                          const day = days.find((d) => d.id === memory.day_id);
+                          if (day) return getDayLabel(day.day_number, trip?.start_date, day.date);
+                          return formatDate(memory.created_at.slice(0, 10));
+                        })()}
                       </span>
                       <button
                         type="button"
@@ -414,10 +416,9 @@ export default function TripMemoriesPage({ params }: PageProps) {
                     </div>
                   </div>
                   <p className="text-sm font-medium text-[#242424] mt-2">
-                    {memory.caption ?? "Sem legenda"}
+                    {memory.caption ?? " "}
                   </p>
                   {renderMemoryPreview(memory)}
-                  <p className="text-xs text-[#8b8b8b] mt-1 break-all">{memory.storage_key}</p>
                 </article>
               ))}
             </div>
