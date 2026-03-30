@@ -168,7 +168,8 @@ def _fetch_trip(trip_id: str, database_url: str, minio_public_endpoint: str) -> 
                     for mem_id, mem_type, storage_key, caption in cur.fetchall():
                         public_url = (
                             f"{endpoint}/trip-archive/{storage_key}"
-                            if storage_key else None
+                            if storage_key
+                            else None
                         )
                         activity.memories.append(
                             SimpleNamespace(
@@ -193,7 +194,8 @@ def _fetch_trip(trip_id: str, database_url: str, minio_public_endpoint: str) -> 
                 for mem_id, mem_type, storage_key, caption in cur.fetchall():
                     public_url = (
                         f"{endpoint}/trip-archive/{storage_key}"
-                        if storage_key else None
+                        if storage_key
+                        else None
                     )
                     day.memories.append(
                         SimpleNamespace(

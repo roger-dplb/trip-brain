@@ -120,8 +120,11 @@ def build_slides_data(trip: Any) -> list[SlideData]:
         no_photo_activity_titles: list[str] = []
         for act in activities:
             act_photos = [
-                m for m in act.memories
-                if m.memory_type == "photo" and getattr(m, "public_url", None) and m.id != hero_id
+                m
+                for m in act.memories
+                if m.memory_type == "photo"
+                and getattr(m, "public_url", None)
+                and m.id != hero_id
             ]
             all_act_photos = [m for m in act.memories if m.memory_type == "photo"]
             if act_photos:
