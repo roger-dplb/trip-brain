@@ -122,6 +122,7 @@ def get_trip_timeline(trip_id: uuid.UUID, db: Session = Depends(get_db)):
                 memories=[
                     TimelineMemory(
                         id=memory.id,
+                        activity_id=memory.activity_id,
                         memory_type=memory.memory_type,
                         caption=memory.caption,
                         storage_key=memory.storage_key,

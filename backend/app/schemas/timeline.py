@@ -18,6 +18,7 @@ class TimelineActivity(BaseModel):
 
 class TimelineMemory(BaseModel):
     id: uuid.UUID
+    activity_id: uuid.UUID | None = None
     memory_type: str
     caption: str | None
     storage_key: str | None

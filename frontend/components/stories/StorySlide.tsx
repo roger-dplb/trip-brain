@@ -9,18 +9,23 @@ type MemoryData = DayData["memories"][number];
 export type Slide =
   | { type: "cover"; day: DayData }
   | { type: "activity"; day: DayData; activity: ActivityData; photos: MemoryData[] }
+  | { type: "media"; day: DayData; media: MemoryData }
   | { type: "summary"; day: DayData; activities: ActivityData[] };
 
 type Props = {
   slide: Slide;
+  onVideoEnded?: () => void;
 };
 
-export function StorySlide({ slide }: Props) {
+export function StorySlide({ slide, onVideoEnded }: Props) {
   if (slide.type === "cover") {
     return <CoverSlide day={slide.day} />;
   }
   if (slide.type === "activity") {
     return <ActivitySlide day={slide.day} activity={slide.activity} photos={slide.photos} />;
+  }
+  if (slide.type === "media") {
+    return <MediaSlide day={slide.day} media={slide.media} onVideoEnded={onVideoEnded} />;
   }
   return <SummarySlide day={slide.day} activities={slide.activities} />;
 }
@@ -102,6 +107,48 @@ function ActivitySlide({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function MediaSlide({
+  day,
+  media,
+  onVideoEnded,
+}: {
+  day: DayData;
+  media: MemoryData;
+  onVideoEnded?: () => void;
+}) {
+  const isVideo = media.memory_type === "video";
+  return (
+    <div className="w-full h-full relative overflow-hidden select-none bg-black">
+      {isVideo ? (
+        <video
+          src={media.public_url ?? undefined}
+          className="absolute inset-0 w-full h-full object-cover"
+          autoPlay
+          muted
+          playsInline
+          onEnded={onVideoEnded}
+        />
+      ) : (
+        media.public_url && (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${media.public_url})` }}
+          />
+        )
+      )}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+      <div className="absolute top-10 left-6 text-white text-[11px] tracking-[3px] opacity-70 uppercase font-medium">
+        Dia {day.day_number} · {day.date}
+      </div>
+      {media.caption && (
+        <div className="absolute bottom-8 left-6 right-6">
+          <p className="text-white text-lg font-medium leading-snug">{media.caption}</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -67,6 +67,7 @@ export type Timeline = {
     }>;
     memories: Array<{
       id: string;
+      activity_id?: string | null;
       memory_type: string;
       caption?: string | null;
       storage_key: string;
