@@ -6,7 +6,7 @@ type Props = {
   duration?: number; // ms for the current slide, default 4000
 };
 
-export function StoryProgress({ total, current, duration = 4000 }: Props) {
+export function StoryProgress({ total, current, duration = 2500 }: Props) {
   return (
     <div className="flex gap-[3px] px-4 pt-3">
       {Array.from({ length: total }).map((_, i) => (

@@ -138,129 +138,6 @@ export default function TripTimelinePage({ params }: PageProps) {
     }
   }
 
-  function renderMemoryCell(
-    memory: Timeline["days"][number]["memories"][number],
-    index: number,
-    allMemories: Timeline["days"][number]["memories"],
-    totalCount: number
-  ) {
-    const isLastVisible = totalCount > 4 && index === 3;
-    const hiddenCount = totalCount - 4;
-    const mediaList = allMemories
-      .filter((m) => m.public_url)
-      .map((m) => ({ url: m.public_url!, caption: m.caption, type: m.memory_type as "photo" | "video" }));
-    const mediaIndex = mediaList.findIndex((p) => p.url === memory.public_url);
-
-    if (memory.memory_type === "video" && memory.public_url) {
-      return (
-        <button
-          key={memory.id}
-          type="button"
-          className="relative aspect-square overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-black cursor-pointer"
-          onClick={() => openLightbox(mediaList, mediaIndex >= 0 ? mediaIndex : 0)}
-        >
-          <video
-            className="w-full h-full object-cover pointer-events-none"
-            preload="metadata"
-            src={memory.public_url}
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            </div>
-          </div>
-          {isLastVisible && (
-            <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xl font-bold rounded-lg">
-              +{hiddenCount}
-            </span>
-          )}
-        </button>
-      );
-    }
-
-    if (memory.memory_type === "photo" && memory.public_url) {
-      return (
-        <button
-          key={memory.id}
-          type="button"
-          className="relative aspect-square overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-white cursor-zoom-in"
-          onClick={() => openLightbox(mediaList, mediaIndex >= 0 ? mediaIndex : 0)}
-        >
-          <Image
-            src={memory.public_url}
-            alt={memory.caption ?? "Memória da viagem"}
-            fill
-            sizes="(max-width: 768px) 50vw, 20vw"
-            className="object-cover hover:scale-105 transition-transform duration-300"
-            unoptimized
-          />
-          {isLastVisible && (
-            <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xl font-bold rounded-lg">
-              +{hiddenCount}
-            </span>
-          )}
-        </button>
-      );
-    }
-
-    return null;
-  }
-
-  function renderMemoriesGrid(memories: Timeline["days"][number]["memories"]) {
-    const visible = memories.filter((m) => m.public_url);
-    if (visible.length === 0) return null;
-
-    const shown = visible.slice(0, 4);
-    const total = visible.length;
-
-    if (total === 1) {
-      const m = shown[0];
-      const singleItem = [{ url: m.public_url!, caption: m.caption, type: m.memory_type as "photo" | "video" }];
-      if (m.memory_type === "video") {
-        return (
-          <button
-            type="button"
-            className="relative mt-2 aspect-[4/3] w-full overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-black cursor-pointer"
-            onClick={() => openLightbox(singleItem, 0)}
-          >
-            <video className="w-full h-full object-cover pointer-events-none" preload="metadata" src={m.public_url ?? undefined} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              </div>
-            </div>
-          </button>
-        );
-      }
-      return (
-        <button
-          type="button"
-          className="relative mt-2 aspect-[4/3] w-full overflow-hidden rounded-lg border border-[rgba(0,0,0,0.08)] bg-white cursor-zoom-in"
-          onClick={() => openLightbox(singleItem, 0)}
-        >
-          <Image src={m.public_url!} alt={m.caption ?? "Memória da viagem"} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover hover:scale-105 transition-transform duration-300" unoptimized />
-        </button>
-      );
-    }
-
-    if (total === 3) {
-      return (
-        <div className="mt-2 space-y-1">
-          <div className="w-full">{renderMemoryCell(shown[0], 0, visible, total)}</div>
-          <div className="grid grid-cols-2 gap-1">
-            {shown.slice(1).map((m, i) => renderMemoryCell(m, i + 1, visible, total))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="mt-2 grid grid-cols-2 gap-1">
-        {shown.map((m, i) => renderMemoryCell(m, i, visible, total))}
-      </div>
-    );
-  }
-
   return (
     <>
     {lightbox && (() => {
@@ -282,7 +159,6 @@ export default function TripTimelinePage({ params }: PageProps) {
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-
           {hasPrev && (
             <button
               type="button"
@@ -295,7 +171,6 @@ export default function TripTimelinePage({ params }: PageProps) {
               </svg>
             </button>
           )}
-
           {hasNext && (
             <button
               type="button"
@@ -308,23 +183,12 @@ export default function TripTimelinePage({ params }: PageProps) {
               </svg>
             </button>
           )}
-
           <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
             {current.type === "video" ? (
-              <video
-                key={current.url}
-                src={current.url}
-                controls
-                autoPlay
-                className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
-              />
+              <video key={current.url} src={current.url} controls autoPlay className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={current.url}
-                alt={current.caption ?? "Memória da viagem"}
-                className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
-              />
+              <img src={current.url} alt={current.caption ?? "Memória da viagem"} className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain shadow-2xl" />
             )}
             {lightbox.items.length > 1 && (
               <p className="mt-2 text-center text-xs text-white/50">{lightbox.index + 1} / {lightbox.items.length}</p>
@@ -336,6 +200,7 @@ export default function TripTimelinePage({ params }: PageProps) {
         </div>
       );
     })()}
+
     <div className="min-h-screen">
       {/* Page header */}
       <div className="bg-[#f3ece8] border-b border-[rgba(0,0,0,0.08)] px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
@@ -356,177 +221,239 @@ export default function TripTimelinePage({ params }: PageProps) {
           <div className="space-y-6">
             {groupDaysByLocation(timeline.days).map((group, groupIdx) => (
               <div key={groupIdx} className="space-y-4">
+                {/* Location group header */}
                 {group.location && (
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="text-base">📍</span>
-                    <span className="text-sm font-semibold text-[#242424]">
-                      {group.location.city}, {group.location.country}
-                    </span>
-                    <span className="text-xs text-[#8b8b8b]">
-                      — {group.days.length === 1
-                        ? `Dia ${group.days[0].day_number}`
-                        : `Dias ${group.days[0].day_number}–${group.days[group.days.length - 1].day_number}`}
-                    </span>
+                  <div className="flex items-center gap-3 px-1 py-1">
+                    <div className="flex items-center gap-2 bg-white border border-[rgba(0,0,0,0.08)] rounded-full px-3 py-1 shadow-sm">
+                      <span className="text-sm">📍</span>
+                      <span className="text-sm font-semibold text-[#242424]">
+                        {group.location.city}, {group.location.country}
+                      </span>
+                      <span className="text-xs text-[#8b8b8b] border-l border-[rgba(0,0,0,0.1)] pl-2">
+                        {group.days.length === 1
+                          ? `Dia ${group.days[0].day_number}`
+                          : `Dias ${group.days[0].day_number}–${group.days[group.days.length - 1].day_number}`}
+                      </span>
+                    </div>
                   </div>
                 )}
-                {group.days.map((day) => (
-              <article
-                key={day.id}
-                className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] overflow-hidden"
-              >
-                {/* Day header */}
-                <div className="bg-[#fafafa] border-b border-[rgba(0,0,0,0.08)] px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-[#ff6b6b] uppercase tracking-wider bg-[#fff0f0] px-2 py-0.5 rounded-md">
-                        Dia {day.day_number}
-                      </span>
-                      {(() => {
-                        const label = day.location
-                          ? `${day.location.city}, ${day.location.country}`
-                          : Array.from(new Set(day.activities.map(a => a.location).filter((l): l is string => !!l))).slice(0, 3).join(" · ");
-                      
-                        return label ? (
-                          <span className="text-xs font-medium text-[#8b8b8b] flex items-center gap-1">
-                            <span className="w-1 h-1 rounded-full bg-[rgba(0,0,0,0.15)] mx-1"></span>
-                            {label}
-                          </span>
-                        ) : null;
-                      })()}
-                    </div>
-                    <h2 className="font-semibold text-[#242424] text-lg">{getDayLabel(day.day_number, trip?.start_date, day.date)}</h2>
-                  </div>
-                </div>
 
-                <div className="p-4 sm:p-6 grid sm:grid-cols-2 gap-6">
-                  {/* Activities */}
-                  <div>
-                    <p className="text-xs font-semibold text-[#8b8b8b] uppercase tracking-wide mb-3">
-                      Atividades
-                    </p>
-                    <ul className="space-y-2">
-                      {day.activities.length === 0 ? (
-                        <li className="text-sm text-[#8b8b8b]">Sem atividades</li>
-                      ) : (
-                        day.activities.map((activity) => (
-                          <li
-                            key={activity.id}
-                            className="flex items-center justify-between gap-2 rounded-lg bg-[#fff9f6] px-3 py-2 text-sm"
-                          >
-                            <span className="font-medium text-[#242424]">{activity.title}</span>
-                            <div className="flex items-center gap-2 shrink-0">
-                              {activity.location_detail ? (
-                                <span className="text-xs text-[#8b8b8b] flex items-center gap-0.5">
-                                  📍 {activity.location_detail.place_name || activity.location_detail.city}
-                                </span>
-                              ) : activity.location ? (
-                                <span className="text-xs text-[#8b8b8b] truncate max-w-[120px]">
-                                  {activity.location}
-                                </span>
-                              ) : null}
-                            </div>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
+                {group.days.map((day) => {
+                  const heroPhoto = day.memories.find((m) => m.memory_type === "photo" && m.public_url);
+                  const photoCount = day.memories.filter((m) => m.memory_type === "photo" && m.public_url).length;
+                  const videoCount = day.memories.filter((m) => m.memory_type === "video" && m.public_url).length;
+                  const doneCount = day.activities.filter((a) => a.status === "done").length;
+                  const locationLabel = day.location
+                    ? `${day.location.city}, ${day.location.country}`
+                    : Array.from(new Set(day.activities.map(a => a.location).filter((l): l is string => !!l))).slice(0, 2).join(" · ");
 
-                  {/* Memories */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs font-semibold text-[#8b8b8b] uppercase tracking-wide">
-                        Memórias
-                      </p>
-                      <button
-                        type="button"
-                        disabled={uploadingDayId !== null}
-                        onClick={() => setOpenUploadDayId(openUploadDayId === day.id ? null : day.id)}
-                        className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
-                          uploadingDayId === day.id
-                            ? "border-[rgba(0,0,0,0.08)] text-[#8b8b8b] cursor-not-allowed"
-                            : openUploadDayId === day.id
-                            ? "border-[#ff6b6b] bg-[#ff6b6b] text-white"
-                            : "border-[#ff6b6b] text-[#ff6b6b] hover:bg-[#ff6b6b] hover:text-white"
-                        }`}
-                      >
-                        {uploadingDayId === day.id ? (
-                          <>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-spin">
-                              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                            </svg>
-                            Enviando…
-                          </>
-                        ) : (
-                          <>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                              {openUploadDayId === day.id
-                                ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
-                                : <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>
-                              }
-                            </svg>
-                            Foto / Vídeo
-                          </>
+                  return (
+                    <article key={day.id} className="bg-white rounded-2xl border border-[rgba(0,0,0,0.08)] overflow-hidden shadow-sm">
+
+                      {/* Hero banner */}
+                      <div className="relative h-36 sm:h-44 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] overflow-hidden">
+                        {heroPhoto?.public_url && (
+                          <Image
+                            src={heroPhoto.public_url}
+                            alt=""
+                            fill
+                            sizes="(max-width: 768px) 100vw, 800px"
+                            className="object-cover"
+                            unoptimized
+                          />
                         )}
-                      </button>
-                    </div>
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                    {/* Inline upload panel */}
-                    {openUploadDayId === day.id && (
-                      <div className="mb-3 rounded-lg border border-[rgba(0,0,0,0.08)] bg-[#fafafa] p-3 space-y-2">
+                        {/* Day badge top-left */}
+                        <div className="absolute top-4 left-4">
+                          <span className="text-xs font-bold text-white bg-[#ff6b6b] px-2.5 py-1 rounded-full tracking-wide uppercase">
+                            Dia {day.day_number}
+                          </span>
+                        </div>
+
+                        {/* Stats top-right */}
+                        <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                          {day.activities.length > 0 && (
+                            <span className="text-xs font-medium text-white/80 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                              {doneCount}/{day.activities.length} ativ.
+                            </span>
+                          )}
+                          {(photoCount + videoCount) > 0 && (
+                            <span className="text-xs font-medium text-white/80 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                              {photoCount > 0 && `${photoCount} 📷`}{videoCount > 0 && ` ${videoCount} 🎥`}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Day label + location bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 px-4 pb-3">
+                          <h2 className="text-white font-bold text-lg leading-tight">
+                            {getDayLabel(day.day_number, trip?.start_date, day.date)}
+                          </h2>
+                          {locationLabel && (
+                            <p className="text-white/60 text-xs mt-0.5 flex items-center gap-1">
+                              <span>📍</span>{locationLabel}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-4 sm:p-5 space-y-5">
+                        {/* Activities */}
                         {day.activities.length > 0 && (
                           <div>
-                            <label className="block text-xs text-[#8b8b8b] mb-1">Atividade (opcional)</label>
-                            <select
-                              className="w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-2.5 py-2 text-xs text-[#242424] focus:border-[#ff6b6b] focus:outline-none focus:ring-1 focus:ring-[#ff6b6b] transition-colors"
-                              value={selectedActivityId[day.id] ?? ""}
-                              onChange={(e) =>
-                                setSelectedActivityId((prev) => ({ ...prev, [day.id]: e.target.value }))
-                              }
-                            >
-                              <option value="">Sem atividade específica</option>
-                              {day.activities.map((activity) => (
-                                <option key={activity.id} value={activity.id}>
-                                  {activity.title}
-                                </option>
-                              ))}
-                            </select>
+                            <p className="text-[10px] font-bold text-[#8b8b8b] uppercase tracking-widest mb-2">Atividades</p>
+                            <div className="flex flex-col gap-1.5">
+                              {day.activities.map((activity) => {
+                                const isDone = activity.status === "done";
+                                return (
+                                  <div
+                                    key={activity.id}
+                                    className="flex items-center gap-3 rounded-xl bg-[#fafafa] border border-[rgba(0,0,0,0.06)] px-3 py-2.5"
+                                  >
+                                    {/* Status dot */}
+                                    <span className={`w-2 h-2 rounded-full shrink-0 ${isDone ? "bg-emerald-400" : "bg-amber-400"}`} />
+                                    <span className="text-sm font-medium text-[#242424] flex-1 truncate">{activity.title}</span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      {activity.scheduled_time && (
+                                        <span className="text-[11px] text-[#8b8b8b]">🕐 {activity.scheduled_time}</span>
+                                      )}
+                                      {activity.location_detail ? (
+                                        <span className="text-[11px] text-[#8b8b8b] truncate max-w-[100px]">
+                                          📍 {activity.location_detail.place_name || activity.location_detail.city}
+                                        </span>
+                                      ) : activity.location ? (
+                                        <span className="text-[11px] text-[#8b8b8b] truncate max-w-[100px]">
+                                          📍 {activity.location}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         )}
-                        <label className="flex items-center justify-center gap-2 w-full rounded-lg border-2 border-dashed border-[rgba(0,0,0,0.15)] bg-white hover:border-[#ff6b6b] hover:bg-[#fff9f6] transition-colors cursor-pointer py-3 text-xs text-[#8b8b8b] hover:text-[#ff6b6b]">
-                          <input
-                            type="file"
-                            accept="image/*,video/*"
-                            className="sr-only"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) handleDayUpload(day.id, selectedActivityId[day.id] || undefined, f);
-                              e.target.value = "";
-                            }}
-                          />
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                          </svg>
-                          Selecionar foto ou vídeo
-                        </label>
-                        {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
-                      </div>
-                    )}
 
-                    <ul className="space-y-2">
-                      {day.memories.length === 0 ? (
-                        <li className="text-sm text-[#8b8b8b]">Sem memórias</li>
-                      ) : (
-                        [(
-                          <li key="memories-grid" className="rounded-lg bg-[#fff9f6] px-3 py-2 text-sm">
-                            {renderMemoriesGrid(day.memories)}
-                          </li>
-                        )]
-                      )}
-                    </ul>
-                  </div>
-                </div>
-              </article>
-                ))}
+                        {/* Memories */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-[10px] font-bold text-[#8b8b8b] uppercase tracking-widest">Memórias</p>
+                            <button
+                              type="button"
+                              disabled={uploadingDayId !== null}
+                              onClick={() => setOpenUploadDayId(openUploadDayId === day.id ? null : day.id)}
+                              className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                                uploadingDayId === day.id
+                                  ? "border-[rgba(0,0,0,0.08)] text-[#8b8b8b] cursor-not-allowed"
+                                  : openUploadDayId === day.id
+                                  ? "border-[#ff6b6b] bg-[#ff6b6b] text-white"
+                                  : "border-[#ff6b6b] text-[#ff6b6b] hover:bg-[#ff6b6b] hover:text-white"
+                              }`}
+                            >
+                              {uploadingDayId === day.id ? (
+                                <>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-spin">
+                                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                                  </svg>
+                                  Enviando…
+                                </>
+                              ) : (
+                                <>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                    {openUploadDayId === day.id
+                                      ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
+                                      : <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>
+                                    }
+                                  </svg>
+                                  Adicionar
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Inline upload panel */}
+                          {openUploadDayId === day.id && (
+                            <div className="mb-3 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#fafafa] p-3 space-y-2">
+                              {day.activities.length > 0 && (
+                                <div>
+                                  <label className="block text-xs text-[#8b8b8b] mb-1">Atividade (opcional)</label>
+                                  <select
+                                    className="w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-2.5 py-2 text-xs text-[#242424] focus:border-[#ff6b6b] focus:outline-none focus:ring-1 focus:ring-[#ff6b6b] transition-colors"
+                                    value={selectedActivityId[day.id] ?? ""}
+                                    onChange={(e) => setSelectedActivityId((prev) => ({ ...prev, [day.id]: e.target.value }))}
+                                  >
+                                    <option value="">Sem atividade específica</option>
+                                    {day.activities.map((activity) => (
+                                      <option key={activity.id} value={activity.id}>{activity.title}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+                              <label className="flex items-center justify-center gap-2 w-full rounded-lg border-2 border-dashed border-[rgba(0,0,0,0.15)] bg-white hover:border-[#ff6b6b] hover:bg-[#fff9f6] transition-colors cursor-pointer py-3 text-xs text-[#8b8b8b] hover:text-[#ff6b6b]">
+                                <input
+                                  type="file"
+                                  accept="image/*,video/*"
+                                  className="sr-only"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleDayUpload(day.id, selectedActivityId[day.id] || undefined, f);
+                                    e.target.value = "";
+                                  }}
+                                />
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                Selecionar foto ou vídeo
+                              </label>
+                              {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
+                            </div>
+                          )}
+
+                          {/* Horizontal scroll strip */}
+                          {day.memories.filter((m) => m.public_url).length === 0 ? (
+                            <p className="text-sm text-[#8b8b8b]">Sem memórias</p>
+                          ) : (
+                            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                              {day.memories.filter((m) => m.public_url).map((memory, idx, arr) => {
+                                const mediaList = arr.map((m) => ({ url: m.public_url!, caption: m.caption, type: m.memory_type as "photo" | "video" }));
+                                return (
+                                  <button
+                                    key={memory.id}
+                                    type="button"
+                                    onClick={() => openLightbox(mediaList, idx)}
+                                    className="relative shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-[rgba(0,0,0,0.08)] bg-black cursor-pointer hover:scale-[1.03] transition-transform duration-200"
+                                  >
+                                    {memory.memory_type === "video" ? (
+                                      <>
+                                        <video className="w-full h-full object-cover pointer-events-none" preload="metadata" src={memory.public_url ?? undefined} />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                          <div className="w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                          </div>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <Image
+                                        src={memory.public_url!}
+                                        alt={memory.caption ?? ""}
+                                        fill
+                                        sizes="96px"
+                                        className="object-cover"
+                                        unoptimized
+                                      />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             ))}
           </div>

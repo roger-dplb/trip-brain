@@ -1,9 +1,8 @@
 # worker/tests/test_add_media_processor.py
 import uuid
-from datetime import date, datetime
-from unittest.mock import MagicMock, patch, call
+from datetime import date
+from unittest.mock import MagicMock
 
-import pytest
 from app.add_media.processor import _find_or_create_day, _renumber_days
 
 

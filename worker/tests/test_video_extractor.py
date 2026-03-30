@@ -1,5 +1,4 @@
 import json
-import subprocess
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 

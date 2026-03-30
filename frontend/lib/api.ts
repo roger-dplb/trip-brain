@@ -53,6 +53,7 @@ export type Memory = {
 export type Timeline = {
   trip_id: string;
   trip_name: string;
+  cover_image_url?: string | null;
   days: Array<{
     id: string;
     day_number: number;

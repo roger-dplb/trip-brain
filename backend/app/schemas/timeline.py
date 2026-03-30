@@ -38,4 +38,5 @@ class TimelineDay(BaseModel):
 class TripTimelineRead(BaseModel):
     trip_id: uuid.UUID
     trip_name: str
+    cover_image_url: str | None = None
     days: list[TimelineDay]

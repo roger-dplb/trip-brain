@@ -14,30 +14,41 @@ type Props = {
 function buildSlides(timeline: Timeline): Slide[] {
   const slides: Slide[] = [];
 
+  const tripName = timeline.trip_name ?? "Minha Viagem";
+  const coverImageUrl = timeline.cover_image_url ?? null;
+
   // First slide: trip cover
-  slides.push({ type: "cover", day: null, tripName: timeline.trip_name });
+  slides.push({ type: "cover", day: null, tripName, coverImageUrl });
 
   for (const day of timeline.days) {
-    // Day cover
-    slides.push({ type: "cover", day, tripName: timeline.trip_name });
+    // Determine hero photo used as day cover background (first photo of day)
+    const heroPhoto = day.memories.find((m) => m.memory_type === "photo" && m.public_url);
+    const heroPhotoId = heroPhoto?.id ?? null;
 
-    // Activity slides — one per photo per activity
+    // Day cover
+    slides.push({ type: "cover", day, tripName });
+
+    // Activity slides — one per photo per activity, skip the hero photo
     const activitiesWithoutPhotos: typeof day.activities = [];
     for (const activity of day.activities) {
       const activityPhotos = day.memories.filter(
+        (m) => m.activity_id === activity.id && m.memory_type === "photo" && m.id !== heroPhotoId
+      );
+      const allActivityPhotos = day.memories.filter(
         (m) => m.activity_id === activity.id && m.memory_type === "photo"
       );
       if (activityPhotos.length > 0) {
         for (const photo of activityPhotos) {
           slides.push({ type: "activity", day, activity, photos: [photo] });
         }
-      } else {
+      } else if (allActivityPhotos.length === 0) {
         activitiesWithoutPhotos.push(activity);
       }
+      // if activity only had the hero photo, don't add to summary either
     }
 
-    // Media slides — one per unlinked photo or video (no activity_id)
-    for (const media of day.memories.filter((m) => !m.activity_id)) {
+    // Media slides — one per unlinked photo or video (no activity_id), skip hero photo
+    for (const media of day.memories.filter((m) => !m.activity_id && m.id !== heroPhotoId)) {
       slides.push({ type: "media", day, media });
     }
 
@@ -69,11 +80,12 @@ export function StoryViewer({ timeline, onClose }: Props) {
     setCurrent((c) => Math.max(0, c - 1));
   }, []);
 
-  // Auto-advance: 4s for non-video slides; videos advance via onEnded
-  const slide = slides[current];
+  const slide = slides[current] ?? null;
   const isVideoSlide = slide?.type === "media" && slide.media.memory_type === "video";
 
+  // Auto-advance: 4s for non-video slides; videos advance via onEnded
   useEffect(() => {
+    if (!slide) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!isVideoSlide) {
       timerRef.current = setTimeout(goNext, 4000);
@@ -81,7 +93,7 @@ export function StoryViewer({ timeline, onClose }: Props) {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [current, isVideoSlide, goNext]);
+  }, [current, slide, isVideoSlide, goNext]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -94,7 +106,7 @@ export function StoryViewer({ timeline, onClose }: Props) {
     return () => window.removeEventListener("keydown", handler);
   }, [goNext, goPrev, onClose]);
 
-  if (slides.length === 0) {
+  if (!slide) {
     return (
       <div className="fixed inset-0 z-50 bg-black flex items-center justify-center p-8">
         <p className="text-white opacity-60 text-center">

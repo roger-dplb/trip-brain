@@ -1,13 +1,14 @@
 "use client";
 
 import type { Timeline } from "@/lib/api";
+import { formatDate } from "@/lib/utils";
 
 type DayData = Timeline["days"][number];
 type ActivityData = DayData["activities"][number];
 type MemoryData = DayData["memories"][number];
 
 export type Slide =
-  | { type: "cover"; day: DayData | null; tripName: string }
+  | { type: "cover"; day: DayData | null; tripName: string; coverImageUrl?: string | null }
   | { type: "activity"; day: DayData; activity: ActivityData; photos: MemoryData[] }
   | { type: "media"; day: DayData; media: MemoryData }
   | { type: "summary"; day: DayData; activities: ActivityData[] };
@@ -19,7 +20,7 @@ type Props = {
 
 export function StorySlide({ slide, onVideoEnded }: Props) {
   if (slide.type === "cover") {
-    return <CoverSlide day={slide.day} tripName={slide.tripName} />;
+    return <CoverSlide day={slide.day} tripName={slide.tripName} coverImageUrl={slide.coverImageUrl} />;
   }
   if (slide.type === "activity") {
     return <ActivitySlide day={slide.day} activity={slide.activity} photos={slide.photos} />;
@@ -30,42 +31,74 @@ export function StorySlide({ slide, onVideoEnded }: Props) {
   return <SummarySlide day={slide.day} activities={slide.activities} />;
 }
 
-function CoverSlide({ day, tripName }: { day: DayData | null; tripName: string }) {
+function CoverSlide({ day, tripName, coverImageUrl }: { day: DayData | null; tripName: string; coverImageUrl?: string | null }) {
   if (!day) {
     // Trip-level cover
     return (
-      <div className="w-full h-full bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex flex-col justify-between p-8 text-white select-none">
-        <span className="text-[10px] opacity-20 tracking-widest uppercase">trip-brain</span>
-        <div className="flex flex-col gap-4">
-          <div className="w-16 h-1 bg-[#ff6b6b] rounded-full" />
-          <h1 className="text-6xl font-extrabold leading-none tracking-tight">
+      <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex flex-col justify-between p-8 text-white select-none">
+        {/* Trip cover image as background */}
+        {coverImageUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${coverImageUrl})` }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/50" />
+        <span className="relative text-[10px] opacity-30 tracking-widest uppercase">trip-brain</span>
+        <div className="relative flex flex-col gap-4 pb-2">
+          <div className="w-16 h-[3px] bg-[#ff6b6b] rounded-full" />
+          <h1 className="text-6xl font-extrabold leading-none tracking-tight drop-shadow-lg">
             {tripName}
           </h1>
-          <p className="text-sm opacity-40 tracking-widest uppercase">sua viagem</p>
+          <p className="text-sm opacity-60 tracking-widest uppercase">sua viagem</p>
         </div>
-        <span className="text-xs opacity-30 tracking-widest uppercase">comece a reviver</span>
       </div>
     );
   }
-  // Day-level cover
+
+  // Day-level cover — use first photo of the day as background
+  const heroPhoto = day.memories.find((m) => m.memory_type === "photo" && m.public_url);
+  const locationLabel = day.location
+    ? `${day.location.city}, ${day.location.country}`
+    : null;
+  const dateLabel = day.date ? formatDate(day.date) : `Dia ${day.day_number}`;
+  const photoCount = day.memories.filter((m) => m.memory_type === "photo").length;
+
   return (
-    <div className="w-full h-full bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex flex-col justify-between p-8 text-white select-none">
-      <div className="flex flex-col gap-1">
-        <span className="text-[10px] opacity-30 tracking-widest uppercase">{tripName}</span>
-        <span className="text-xs tracking-[4px] opacity-50 uppercase font-medium">
+    <div className="w-full h-full relative overflow-hidden bg-[#0f3460] flex flex-col justify-between p-8 text-white select-none">
+      {/* Hero background */}
+      {heroPhoto?.public_url && (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${heroPhoto.public_url})` }}
+        />
+      )}
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/50" />
+
+      {/* Top-left: small trip label */}
+      <div className="relative">
+        <span className="text-[10px] opacity-50 tracking-widest uppercase">{tripName}</span>
+      </div>
+
+      {/* Bottom: all day info anchored at bottom like activity slides */}
+      <div className="relative flex flex-col gap-2 pb-2">
+        <span className="text-xs tracking-[3px] opacity-60 uppercase font-medium">
           Dia {day.day_number}
         </span>
-      </div>
-      <div className="flex flex-col gap-3">
-        <div className="w-12 h-1 bg-[#ff6b6b] rounded-full" />
-        <h2 className="text-5xl font-extrabold leading-none tracking-tight">
-          {day.date ?? `Dia ${day.day_number}`}
+        <div className="w-10 h-[3px] bg-[#ff6b6b] rounded-full" />
+        <h2 className="text-5xl font-extrabold leading-none tracking-tight drop-shadow-lg">
+          {dateLabel}
         </h2>
-        <p className="text-sm opacity-40 tracking-widest uppercase">
-          {day.activities.length} atividades · {day.memories.length} fotos
+        {locationLabel && (
+          <p className="text-base font-semibold opacity-90 flex items-center gap-1.5 mt-0.5">
+            <span className="text-base">📍</span>{locationLabel}
+          </p>
+        )}
+        <p className="text-xs opacity-40 tracking-widest uppercase mt-0.5">
+          {day.activities.length} atividades · {photoCount} fotos
         </p>
       </div>
-      <span className="text-[10px] opacity-20 tracking-widest uppercase">trip-brain</span>
     </div>
   );
 }

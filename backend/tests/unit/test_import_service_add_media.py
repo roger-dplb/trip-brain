@@ -1,7 +1,6 @@
 # backend/tests/unit/test_import_service_add_media.py
 import uuid
-from types import SimpleNamespace
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 from app.services.import_service import enqueue_trip_media_add
 
 

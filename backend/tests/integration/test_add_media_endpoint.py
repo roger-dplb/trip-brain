@@ -1,6 +1,5 @@
 # backend/tests/integration/test_add_media_endpoint.py
 import uuid
-from datetime import date
 from unittest.mock import patch
 
 
